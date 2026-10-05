@@ -1,68 +1,752 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-width=1.0">
-    <title>Prof. Nélio Lima - Lab. de Eletromagnetismo</title>
-    <link rel="icon" href="icone.png" type="image/png">
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
-    
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
-            text-align: center;
-            margin: 0;
-            padding: 20px;
-        }
-        h2 { color: #333; }
-        .controles {
-            background: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            display: inline-block;
-            margin-bottom: 20px;
-            box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
-        }
-        input[type="number"] {
-            padding: 8px;
-            font-size: 16px;
-            width: 100px;
-            text-align: center;
-        }
-        button {
-            padding: 10px 15px;
-            font-size: 16px;
-            background-color: #0056b3;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover { background-color: #003d82; }
-        canvas {
-            border: 2px solid #ccc;
-            border-radius: 8px;
-            box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laboratório Virtual — Levitação Magnética</title>
+
+  <!-- p5.js -->
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.11.10/lib/p5.min.js"></script>
+
+  <style>
+    :root {
+      --blue: #1769aa;
+      --blue-dark: #0d4775;
+      --blue-soft: #eaf4fb;
+      --green: #18864b;
+      --green-soft: #eaf8f0;
+      --red: #c62828;
+      --red-soft: #fff0f0;
+      --text: #243447;
+      --muted: #66788a;
+      --border: #d8e1e8;
+      --bg: #f4f7fa;
+      --white: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    .app {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* =======================
+       LADO ESQUERDO
+       ======================= */
+    .simulator-panel {
+      position: relative;
+      flex: 1 1 auto;
+      min-width: 0;
+      height: 100vh;
+      background: #eef3f7;
+      overflow: hidden;
+    }
+
+    #canvas-holder {
+      position: absolute;
+      inset: 0;
+    }
+
+    #canvas-holder canvas {
+      display: block;
+    }
+
+    .sim-controls {
+      position: absolute;
+      z-index: 10;
+      top: 18px;
+      left: 18px;
+      width: min(370px, calc(100% - 36px));
+      padding: 16px;
+      background: rgba(255,255,255,0.96);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(20, 45, 70, 0.12);
+    }
+
+    .sim-controls h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: var(--blue-dark);
+    }
+
+    .control-group {
+      margin: 10px 0;
+    }
+
+    .control-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .mass-row {
+      display: grid;
+      grid-template-columns: 1fr 84px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--blue);
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 9px 10px;
+      border: 1px solid #b9c7d2;
+      border-radius: 7px;
+      font-size: 14px;
+      background: #fff;
+    }
+
+    .value-readout {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .r-actions {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 7px;
+      padding: 9px 13px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: 0.15s ease;
+    }
+
+    button:hover { filter: brightness(0.96); transform: translateY(-1px); }
+
+    .btn-primary {
+      color: white;
+      background: var(--blue);
+    }
+
+    .btn-secondary {
+      color: var(--blue-dark);
+      background: var(--blue-soft);
+    }
+
+    .hint {
+      margin: 10px 0 0;
+      font-size: 12px;
+      line-height: 1.4;
+      color: var(--muted);
+    }
+
+    /* =======================
+       LADO DIREITO
+       ======================= */
+    .report-panel {
+      flex: 0 0 450px;
+      width: 450px;
+      height: 100vh;
+      background: var(--white);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .report-header {
+      padding: 18px 20px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .report-header h1 {
+      margin: 0 0 5px;
+      font-size: 20px;
+      color: var(--blue-dark);
+    }
+
+    .report-header p {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .steps {
+      display: flex;
+      padding: 10px 14px;
+      gap: 5px;
+      border-bottom: 1px solid var(--border);
+      background: #fafcfd;
+    }
+
+    .step-indicator {
+      flex: 1;
+      min-width: 0;
+      padding: 7px 4px;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: #80909e;
+      background: #edf1f4;
+    }
+
+    .step-indicator.active {
+      color: white;
+      background: var(--blue);
+    }
+
+    .step-indicator.done {
+      color: var(--blue-dark);
+      background: #dceefa;
+    }
+
+    #report-form {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      flex: 1;
+    }
+
+    .form-body {
+      overflow-y: auto;
+      flex: 1;
+      padding: 18px 20px;
+    }
+
+    .form-step {
+      display: none;
+      animation: fadeIn 0.18s ease;
+    }
+
+    .form-step.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateX(5px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .form-step h2 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      color: var(--blue-dark);
+    }
+
+    .form-step .step-description {
+      margin: 0 0 16px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .field input,
+    .field textarea,
+    .field select {
+      width: 100%;
+      border: 1px solid #c5d1da;
+      border-radius: 7px;
+      padding: 9px 10px;
+      font: inherit;
+      font-size: 13px;
+      background: #fff;
+    }
+
+    .field textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .field input:focus,
+    .field textarea:focus,
+    .field select:focus,
+    input[type="number"]:focus {
+      outline: 2px solid rgba(23,105,170,0.18);
+      border-color: var(--blue);
+    }
+
+    .question {
+      padding: 12px;
+      margin-bottom: 12px;
+      border: 1px solid #dbe4ea;
+      border-radius: 8px;
+      background: #fbfcfd;
+    }
+
+    .question p {
+      margin: 0 0 8px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .question small {
+      color: var(--muted);
+    }
+
+    .form-footer {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border);
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .footer-status {
+      min-width: 0;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    #submit-status {
+      display: none;
+      margin: 0 20px 12px;
+      padding: 10px 12px;
+      border-radius: 7px;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    #submit-status.loading {
+      display: block;
+      color: #6a4c00;
+      background: #fff8df;
+      border: 1px solid #f0dc93;
+    }
+
+    #submit-status.success {
+      display: block;
+      color: var(--green);
+      background: var(--green-soft);
+      border: 1px solid #a9dfbf;
+    }
+
+    #submit-status.error {
+      display: block;
+      color: var(--red);
+      background: var(--red-soft);
+      border: 1px solid #efb0b0;
+    }
+
+    .required-note {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    @media (max-width: 900px) {
+      html, body { overflow: auto; }
+
+      .app {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+      }
+
+      .simulator-panel {
+        height: 68vh;
+        min-height: 520px;
+      }
+
+      .report-panel {
+        width: 100%;
+        flex-basis: auto;
+        height: auto;
+        min-height: 650px;
+        border-left: 0;
+        border-top: 1px solid var(--border);
+      }
+    }
+  </style>
 </head>
+
 <body>
+  <main class="app">
 
-    <h2>Levitação Magnética - Atividade Prática</h2>
-    <p>Prof. Nélio Néves Lima | Física III - IFG</p>
+    <!-- =========================================================
+         SIMULADOR
+         ========================================================= -->
+    <section class="simulator-panel">
+      <div id="canvas-holder"></div>
 
-    <div class="controles">
-        <p>Calcule a Resistência (R) necessária no eletroímã para que a Força Magnética anule o Peso da barra.</p>
-        <label>Resistência R (Ohms): </label>
-        <input type="number" id="input_R" step="0.1" placeholder="Ex: 15.5">
-        <button onclick="testarValores()">Aplicar Resistência</button>
-    </div>
-    <br>
-    
-    <main></main>
-    <script src="sketch.js"></script>
+      <div class="sim-controls">
+        <h2>Controles do simulador</h2>
 
+        <div class="control-group">
+          <label for="mass-slider">Massa da barra condutora</label>
+          <div class="mass-row">
+            <input id="mass-slider"
+                   type="range"
+                   min="0.050"
+                   max="0.250"
+                   step="0.001"
+                   value="0.150">
+            <input id="mass-display"
+                   type="number"
+                   min="0.050"
+                   max="0.250"
+                   step="0.001"
+                   value="0.150"
+                   aria-label="Massa em quilogramas">
+          </div>
+          <div class="value-readout">Massa: <strong id="mass-value">0,150 kg</strong></div>
+        </div>
+
+        <div class="control-group">
+          <label for="resistance-input">Resistência calculada, R (Ω)</label>
+          <div class="r-actions">
+            <input id="resistance-input"
+                   name="resistance_simulator"
+                   type="number"
+                   min="0.001"
+                   step="0.001"
+                   placeholder="Ex.: 0,850">
+            <button id="apply-r" class="btn-primary" type="button">Aplicar R</button>
+          </div>
+          <p class="hint">
+            Calcule o valor de R que faz a força magnética compensar o peso:
+            <strong>F<sub>m</sub> ≈ P</strong>. O limite de aceitação é ±3%.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         RELATÓRIO
+         ========================================================= -->
+    <aside class="report-panel">
+      <header class="report-header">
+        <h1>Relatório da atividade</h1>
+        <p>Levitação Magnética — registre suas hipóteses, cálculos e conclusões.</p>
+      </header>
+
+      <nav class="steps" aria-label="Etapas do relatório">
+        <div class="step-indicator active">1<br>Identificação</div>
+        <div class="step-indicator">2<br>Mecânica</div>
+        <div class="step-indicator">3<br>Eletromag.</div>
+        <div class="step-indicator">4<br>Vetores</div>
+        <div class="step-indicator">5<br>Reflexão</div>
+      </nav>
+
+      <form id="report-form">
+        <div class="form-body">
+
+          <!-- ETAPA 1 -->
+          <section class="form-step active">
+            <h2>1. Identificação</h2>
+            <p class="step-description">
+              Informe seus dados para identificar o relatório.
+            </p>
+
+            <div class="field">
+              <label for="student-name">Nome</label>
+              <input id="student-name" name="nome" type="text" required>
+            </div>
+
+            <div class="field">
+              <label for="student-class">Turma</label>
+              <input id="student-class" name="turma" type="text" required>
+            </div>
+
+            <div class="field">
+              <label for="student-date">Data</label>
+              <input id="student-date" name="data" type="date" required>
+            </div>
+
+            <div class="field">
+              <label for="initial-hypothesis">Antes de executar o desafio, o que você espera que aconteça quando a força magnética se aproximar do peso?</label>
+              <textarea id="initial-hypothesis" name="hipotese_inicial" required></textarea>
+            </div>
+          </section>
+
+          <!-- ETAPA 2 -->
+          <section class="form-step">
+            <h2>2. Análise Mecânica</h2>
+            <p class="step-description">
+              Analise as forças envolvidas na barra condutora.
+            </p>
+
+            <div class="question">
+              <p><strong>1.</strong> Escreva a expressão para o peso da barra.</p>
+              <input type="text" name="mecanica_peso" placeholder="Ex.: P = m · g">
+            </div>
+
+            <div class="question">
+              <p><strong>2.</strong> Considerando duas molas idênticas, explique como a constante elástica <em>k</em> influencia a posição de equilíbrio.</p>
+              <textarea name="mecanica_molas"></textarea>
+            </div>
+
+            <div class="question">
+              <p><strong>3.</strong> Qual é o papel do amortecimento/interpolação usado no simulador?</p>
+              <textarea name="mecanica_amortecimento"></textarea>
+            </div>
+          </section>
+
+          <!-- ETAPA 3 -->
+          <section class="form-step">
+            <h2>3. Eletromagnetismo</h2>
+            <p class="step-description">
+              Use as relações entre campo, corrente, tensão e resistência.
+            </p>
+
+            <div class="question">
+              <p><strong>1.</strong> Registre a expressão da força magnética sobre o fio.</p>
+              <input type="text" name="eletro_fm" placeholder="Ex.: Fm = B · i · L">
+            </div>
+
+            <div class="question">
+              <p><strong>2.</strong> O simulador utiliza <strong>B = K<sub>b</sub> · (V/R)</strong>. Explique qualitativamente o que ocorre com B quando R aumenta.</p>
+              <textarea name="eletro_resistencia"></textarea>
+            </div>
+
+            <div class="question">
+              <p><strong>3.</strong> Registre o cálculo da resistência que você aplicou no desafio.</p>
+              <textarea name="eletro_calculo_r" placeholder="Mostre as etapas do cálculo."></textarea>
+            </div>
+          </section>
+
+          <!-- ETAPA 4 -->
+          <section class="form-step">
+            <h2>4. Vetores</h2>
+            <p class="step-description">
+              Observe as direções das forças e da corrente no esquema.
+            </p>
+
+            <div class="question">
+              <p><strong>1.</strong> Indique a direção e o sentido do peso sobre a barra.</p>
+              <textarea name="vetor_peso"></textarea>
+            </div>
+
+            <div class="question">
+              <p><strong>2.</strong> Qual deve ser a direção da força magnética para que ocorra a levitação?</p>
+              <textarea name="vetor_magnetica"></textarea>
+            </div>
+
+            <div class="question">
+              <p><strong>3.</strong> Como a regra da mão direita pode ajudar a analisar o sentido da força magnética?</p>
+              <textarea name="vetor_mao_direita"></textarea>
+            </div>
+          </section>
+
+          <!-- ETAPA 5 -->
+          <section class="form-step">
+            <h2>5. Reflexão</h2>
+            <p class="step-description">
+              Relacione o resultado da simulação com o modelo físico estudado.
+            </p>
+
+            <div class="question">
+              <p><strong>1.</strong> O que aconteceu quando o erro relativo ficou ≤ 3%?</p>
+              <textarea name="reflexao_resultado" required></textarea>
+            </div>
+
+            <div class="question">
+              <p><strong>2.</strong> Quais grandezas você precisou conhecer para determinar R?</p>
+              <textarea name="reflexao_grandezas"></textarea>
+            </div>
+
+            <div class="question">
+              <p><strong>3.</strong> Cite uma limitação deste modelo de laboratório virtual em comparação com um experimento real.</p>
+              <textarea name="reflexao_limitacao"></textarea>
+            </div>
+
+            <!-- Valores do simulador são preenchidos automaticamente pelo JS -->
+            <input type="hidden" id="sim-mass" name="massa_simulador">
+            <input type="hidden" id="sim-k" name="k_simulador">
+            <input type="hidden" id="sim-v" name="tensao_eletroima">
+            <input type="hidden" id="sim-i" name="corrente_fio">
+            <input type="hidden" id="sim-b" name="campo_magnetico">
+            <input type="hidden" id="sim-fm" name="forca_magnetica">
+            <input type="hidden" id="sim-p" name="peso">
+            <input type="hidden" id="sim-error" name="erro_relativo">
+            <input type="hidden" id="sim-state" name="estado_desafio">
+
+            <p class="required-note">Os campos com validação obrigatória devem ser preenchidos antes do envio.</p>
+          </section>
+
+        </div>
+
+        <div id="submit-status"></div>
+
+        <footer class="form-footer">
+          <div class="footer-status">
+            Etapa <strong id="current-step">1</strong> de 5
+          </div>
+
+          <div class="nav-buttons">
+            <button id="back-btn" class="btn-secondary" type="button" disabled>Voltar</button>
+            <button id="next-btn" class="btn-primary" type="button">Avançar</button>
+            <button id="submit-btn" class="btn-primary" type="submit" style="display:none;">Enviar Relatório</button>
+          </div>
+        </footer>
+      </form>
+    </aside>
+  </main>
+
+  <script>
+    /*
+      ============================================================
+      CONFIGURAÇÃO DO ENVIO
+      ============================================================
+      Substitua a URL abaixo pela URL implantada do seu Google Apps
+      Script (Web App).
+
+      Exemplo:
+      const APPS_SCRIPT_URL =
+        "https://script.google.com/macros/s/SEU_ID/exec";
+    */
+    const APPS_SCRIPT_URL = "COLE_AQUI_A_URL_DO_SEU_GOOGLE_APPS_SCRIPT";
+
+    // ============================================================
+    // FORMULÁRIO MULTIETAPAS
+    // ============================================================
+    const form = document.getElementById("report-form");
+    const steps = [...document.querySelectorAll(".form-step")];
+    const indicators = [...document.querySelectorAll(".step-indicator")];
+    const backBtn = document.getElementById("back-btn");
+    const nextBtn = document.getElementById("next-btn");
+    const submitBtn = document.getElementById("submit-btn");
+    const currentStepLabel = document.getElementById("current-step");
+    const submitStatus = document.getElementById("submit-status");
+
+    let currentStep = 0;
+
+    function showStep(index) {
+      currentStep = Math.max(0, Math.min(index, steps.length - 1));
+
+      steps.forEach((step, i) => {
+        step.classList.toggle("active", i === currentStep);
+      });
+
+      indicators.forEach((indicator, i) => {
+        indicator.classList.toggle("active", i === currentStep);
+        indicator.classList.toggle("done", i < currentStep);
+      });
+
+      currentStepLabel.textContent = String(currentStep + 1);
+      backBtn.disabled = currentStep === 0;
+
+      const last = currentStep === steps.length - 1;
+      nextBtn.style.display = last ? "none" : "inline-block";
+      submitBtn.style.display = last ? "inline-block" : "none";
+
+      document.querySelector(".form-body").scrollTop = 0;
+    }
+
+    function validateCurrentStep() {
+      const fields = [...steps[currentStep].querySelectorAll("input, textarea, select")];
+
+      for (const field of fields) {
+        if (field.type === "hidden" || field.disabled) continue;
+
+        if (!field.checkValidity()) {
+          field.reportValidity();
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    nextBtn.addEventListener("click", () => {
+      if (validateCurrentStep()) showStep(currentStep + 1);
+    });
+
+    backBtn.addEventListener("click", () => {
+      showStep(currentStep - 1);
+    });
+
+    // ============================================================
+    // ENVIO POR FETCH + FORMDATA
+    // ============================================================
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      if (!validateCurrentStep()) return;
+
+      // Atualiza os campos hidden com os últimos valores disponíveis
+      if (typeof updateSimulatorHiddenFields === "function") {
+        updateSimulatorHiddenFields();
+      }
+
+      if (APPS_SCRIPT_URL.includes("COLE_AQUI")) {
+        submitStatus.className = "error";
+        submitStatus.textContent =
+          "Configure primeiro a URL do Google Apps Script no arquivo index.html.";
+        return;
+      }
+
+      submitStatus.className = "loading";
+      submitStatus.textContent = "Enviando relatório... Aguarde.";
+
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error("Resposta HTTP " + response.status);
+        }
+
+        submitStatus.className = "success";
+        submitStatus.textContent =
+          "Relatório enviado com sucesso. Seus dados foram registrados.";
+      } catch (error) {
+        console.error(error);
+        submitStatus.className = "error";
+        submitStatus.textContent =
+          "Não foi possível enviar o relatório. Verifique a URL do Apps Script e sua conexão.";
+      }
+    });
+
+    // Data atual como valor inicial
+    const dateInput = document.getElementById("student-date");
+    if (!dateInput.value) {
+      const now = new Date();
+      const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+        .toISOString().slice(0, 10);
+      dateInput.value = localDate;
+    }
+
+    showStep(0);
+  </script>
+
+  <!-- A lógica física fica separada no arquivo sketch.js -->
+  <script src="sketch.js"></script>
 </body>
 </html>
