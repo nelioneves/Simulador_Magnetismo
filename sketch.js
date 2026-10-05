@@ -68,6 +68,10 @@ let rulerBottom = 0;
 let fieldCenterX = 0;
 let fieldCenterY = 0;
 
+// Deformação física de cada mola em metros.
+// Em equilíbrio: 2 k x = m g  ->  x = m g / (2 k)
+let springDeformation = 0;
+
 let fieldOn = false;
 let challengeState = "idle"; // idle | success | error
 let errorBlink = 0;
@@ -165,27 +169,24 @@ function recalculateGeometry() {
   const top = 92;
   const bottom = height * 0.77;
 
-  // Reserva visual: o painel de controles ocupa o canto superior esquerdo.
-  // O aparato físico começa depois dessa área para nunca ficar escondido
-  // atrás da janela flutuante.
-  const safeLeft = min(400, max(300, width * 0.43));
-  const safeRight = width * 0.80;
-
-  springXLeft = safeLeft;
-  springXRight = safeRight;
+  springXLeft = width * 0.28;
+  springXRight = width * 0.69;
 
   barLeft = springXLeft;
   barRight = springXRight;
 
   naturalY = height * 0.43;
 
-  // Escala visual: deslocamento mecânico moderado.
-  // y_eq = y0 + ((m*g)/(2*k))*escala
+  // Deformação de CADA mola:
+  // 2 k x = m g  ->  x = m g / (2 k)
+  springDeformation = (massa * g) / (2 * k);
+
+  // Escala visual: o deslocamento mecânico é ampliado
+  // para permanecer claramente visível no laboratório.
   const scalePxPerMeter = min(2300, height * 3.0);
 
-  const equilibriumDisplacement = (massa * g) / (2 * k);
   const mechanicalEqY =
-    naturalY + equilibriumDisplacement * scalePxPerMeter;
+    naturalY + springDeformation * scalePxPerMeter;
 
   if (barY === 0 || !Number.isFinite(barY)) {
     barY = mechanicalEqY;
@@ -254,10 +255,14 @@ function drawCeiling() {
   }
 
   noStroke();
-  fill(95, 110, 122);
+  fill(13, 71, 117);
   textSize(13);
   textStyle(BOLD);
-  text("LABORATÓRIO VIRTUAL — LEVITAÇÃO MAGNÉTICA", 18, 76);
+  text("IFG — INSTITUTO FEDERAL DE GOIÁS", 18, 72);
+
+  textSize(12);
+  fill(70, 88, 103);
+  text("Física III  •  Prof. Nélio Neves Lima", 18, 88);
   textStyle(NORMAL);
 }
 
@@ -304,19 +309,17 @@ function drawMagneticField() {
 // CIRCUITO 1 — FIO SUSPENSO
 // ----------------------------------------------------------------
 function drawCircuitOne() {
-  const y = 118;
-  const circuitLeft = springXLeft;
-  const circuitRight = min(width - 35, springXRight + 35);
-  const batteryX = circuitLeft + (circuitRight - circuitLeft) * 0.32;
-  const meterX = circuitLeft + (circuitRight - circuitLeft) * 0.63;
+  const y = 130;
+  const batteryX = width * 0.47;
+  const meterX = width * 0.61;
 
   stroke(55, 68, 78);
   strokeWeight(2);
 
-  // O circuito superior também respeita a área reservada ao painel.
-  line(circuitLeft, y, batteryX - 10, y);
+  // Fios superiores
+  line(90, y, batteryX - 10, y);
   line(batteryX + 10, y, meterX - 30, y);
-  line(meterX + 30, y, circuitRight, y);
+  line(meterX + 30, y, width - 55, y);
 
   // Bateria
   strokeWeight(3);
@@ -335,14 +338,14 @@ function drawCircuitOne() {
   textStyle(NORMAL);
 
   // Setas de corrente no circuito superior
-  drawArrow(circuitLeft + 35, y, circuitLeft + 65, y, "#1769aa");
-  drawArrow(circuitRight - 65, y, circuitRight - 35, y, "#1769aa");
+  drawArrow(170, y, 200, y, "#1769aa");
+  drawArrow(width - 125, y, width - 95, y, "#1769aa");
 
   noStroke();
   fill(74, 91, 104);
   textSize(11);
   textAlign(LEFT, CENTER);
-  text("Circuito 1 — fio suspenso", circuitLeft, y - 19);
+  text("Circuito 1 — fio suspenso", 90, y - 19);
 
   // U próximo à bateria
   text("U", batteryX - 1, y + 31);
@@ -390,14 +393,63 @@ function drawWireAndSprings() {
   textAlign(CENTER, CENTER);
   text("i", fieldCenterX, barY + 34);
 
-  // Carga
+  // Identificação da barra
   textSize(11);
   fill(75, 91, 103);
   text("barra condutora de cobre", fieldCenterX, barY - 17);
 
+  // ------------------------------------------------------------
+  // COTA DA DEFORMAÇÃO DAS MOLAS
+  // ------------------------------------------------------------
+  // Mostramos a deformação física calculada, em cm, ao lado
+  // da mola direita. No sucesso, ela vai para zero.
+  const deformationNow =
+    challengeState === "success" ? 0 : springDeformation;
+
+  const deformationCm = deformationNow * 100;
+
+  // Linha de cota
+  const dimX = springXRight + 28;
+  const springTop = topY + 20;
+  const springBottom = barY - 7;
+
+  stroke(23, 105, 170, 190);
+  strokeWeight(1.5);
+  drawingContext.setLineDash([4, 4]);
+  line(dimX, springTop, dimX, springBottom);
+  drawingContext.setLineDash([]);
+
+  // Marcadores da cota
+  line(dimX - 5, springTop, dimX + 5, springTop);
+  line(dimX - 5, springBottom, dimX + 5, springBottom);
+
+  noStroke();
+  fill("#1769aa");
+  textSize(11);
+  textStyle(BOLD);
+  textAlign(LEFT, CENTER);
+  text(`Δx = ${deformationCm.toFixed(2)} cm`, dimX + 9,
+       (springTop + springBottom) / 2 - 7);
+  textStyle(NORMAL);
+  textSize(9);
+  fill("#536979");
+  text("cada mola", dimX + 9,
+       (springTop + springBottom) / 2 + 8);
+
+  // Cota do deslocamento da barra em relação à posição natural
+  const displacementMeters =
+    challengeState === "success" ? 0 : max(0, (barY - naturalY) / min(2300, height * 3.0));
+  const displacementCm = displacementMeters * 100;
+
+  fill("#18864b");
+  textSize(10);
+  textStyle(BOLD);
+  text(`deslocamento da barra: ${displacementCm.toFixed(2)} cm`,
+       fieldCenterX, barY + 50);
+  textStyle(NORMAL);
+
   textAlign(LEFT, BASELINE);
 }
-
 function drawSpring(x, y1, y2) {
   const length = max(18, y2 - y1);
   const turns = 7;
@@ -431,32 +483,54 @@ function drawRuler() {
   strokeWeight(2);
   line(rulerX, rulerTop, rulerX, rulerBottom);
 
-  const pxPerMeter = 330;
-  const maxMeters = max(0.12, (rulerBottom - naturalY) / pxPerMeter);
+  // Escala da régua: 1 cm em uma distância visual constante.
+  const rulerPxPerMeter = 330;
 
-  for (let i = 0; i <= 6; i++) {
-    const y = naturalY + i * (rulerBottom - naturalY) / 6;
-    const tick = (i % 2 === 0) ? 14 : 9;
+  // Marcações a cada 10 cm, com subdivisão visual.
+  const maxCm = floor(max(10, (rulerBottom - naturalY) / rulerPxPerMeter * 100));
 
+  for (let cm = 0; cm <= maxCm; cm += 5) {
+    const y = naturalY + (cm / 100) * rulerPxPerMeter;
+    if (y > rulerBottom) break;
+
+    const major = (cm % 10 === 0);
+    const tick = major ? 15 : 9;
+
+    stroke(75, 87, 98);
+    strokeWeight(major ? 1.5 : 1);
     line(rulerX - tick, y, rulerX + tick, y);
 
-    noStroke();
-    fill(76, 90, 101);
-    textSize(10);
-
-    const meters = (y - naturalY) / pxPerMeter;
-    text((meters).toFixed(2) + " m", rulerX + 18, y + 3);
+    if (major) {
+      noStroke();
+      fill(76, 90, 101);
+      textSize(9);
+      text(`${(cm / 100).toFixed(2)} m`, rulerX + 18, y + 3);
+    }
   }
 
+  // Zero da posição natural
   stroke("#18864b");
-  strokeWeight(2);
-  line(rulerX - 18, naturalY, rulerX + 18, naturalY);
+  strokeWeight(2.5);
+  line(rulerX - 20, naturalY, rulerX + 20, naturalY);
 
   noStroke();
   fill("#18864b");
   textSize(11);
   textStyle(BOLD);
-  text("0 — posição natural", rulerX - 95, naturalY - 10);
+  text("0 — posição natural", rulerX - 95, naturalY - 11);
+  textStyle(NORMAL);
+
+  // Posição atual da barra
+  const currentDisplacementCm =
+    challengeState === "success"
+      ? 0
+      : max(0, (barY - naturalY) / rulerPxPerMeter * 100);
+
+  fill("#1769aa");
+  textSize(10);
+  textStyle(BOLD);
+  text(`barra: ${currentDisplacementCm.toFixed(2)} cm abaixo`,
+       rulerX - 115, barY + 4);
   textStyle(NORMAL);
 }
 
@@ -464,16 +538,15 @@ function drawRuler() {
 // CIRCUITO 2 — ELETROÍMÃ
 // ----------------------------------------------------------------
 function drawCircuitTwo() {
-  // O segundo circuito fica na faixa inferior direita, fora da área
-  // reservada aos controles e sem esconder o aparato principal.
-  const w = min(205, width * 0.22);
-  const x0 = max(18, width - w - 115);
+  const x0 = 34;
   const y0 = height - 120;
+  const w = 190;
 
   stroke(78, 91, 102);
   strokeWeight(2);
   noFill();
 
+  // Retângulo esquemático
   line(x0, y0, x0 + 28, y0);
   line(x0 + 75, y0, x0 + 115, y0);
   line(x0 + 157, y0, x0 + w, y0);
@@ -491,6 +564,7 @@ function drawCircuitTwo() {
   rect(x0 + 115, y0 - 10, 42, 20);
   line(x0 + 105, y0 + 14, x0 + 166, y0 - 16);
 
+  // Seta de corrente
   drawArrow(x0 + 72, y0, x0 + 103, y0, "#1769aa");
 
   noStroke();
@@ -504,26 +578,27 @@ function drawCircuitTwo() {
   text("V", x0 + 47, y0 + 28);
   text("R variável", x0 + 112, y0 + 31);
 
+  // Linha tracejada até a região magnética
   stroke(23, 105, 170, 150);
   strokeWeight(1.5);
   drawingContext.setLineDash([6, 5]);
-  line(x0 + w, y0 + 10, fieldCenterX + 55, fieldCenterY + 55);
+  line(x0 + w, y0 + 10, fieldCenterX - 65, fieldCenterY + 40);
   drawingContext.setLineDash([]);
 
   noStroke();
   fill(70, 90, 105);
   textSize(10);
-  text("acoplamento ao campo", x0 + 42, y0 + 52);
+  text("acoplamento ao campo", x0 + 80, y0 + 52);
 }
 
 // ----------------------------------------------------------------
 // HUD
 // ----------------------------------------------------------------
 function drawHUD() {
-  const x = min(400, max(300, width * 0.43));
-  const y = height - 172;
-  const w = min(300, max(260, width * 0.29));
-  const h = 145;
+  const x = 18;
+  const y = height - 185;
+  const w = min(310, width * 0.29);
+  const h = 158;
 
   noStroke();
   fill(255, 255, 255, 238);
@@ -555,6 +630,7 @@ function drawHUD() {
     `i_fio = ${i_fio.toFixed(2)} A`,
     `L = ${L.toFixed(3)} m`,
     `P = ${P.toFixed(3)} N`,
+    `Δx_mola = ${((challengeState === "success" ? 0 : springDeformation) * 100).toFixed(2)} cm`,
     `B* = ${Bideal.toFixed(3)} T`
   ];
 
@@ -778,6 +854,8 @@ function updateSimulatorHiddenFields(R = null, B = null, Fm = null, P = null, er
   setHidden("sim-fm", Number.isFinite(magneticForce) ? magneticForce.toFixed(5) : "");
   setHidden("sim-p", weight.toFixed(5));
   setHidden("sim-error", Number.isFinite(relativeError) ? relativeError.toFixed(6) : "");
+  setHidden("sim-spring-deformation",
+            ((challengeState === "success" ? 0 : springDeformation) * 100).toFixed(4));
   setHidden("sim-state", challengeState);
 }
 
