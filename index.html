@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Laboratório Virtual — Levitação Magnética</title>
+  <title>Laboratório Virtual — Levitação Magnética | IFG — Física III</title>
 
   <!-- p5.js -->
   <script src="https://cdn.jsdelivr.net/npm/p5@1.11.10/lib/p5.min.js"></script>
@@ -177,6 +177,27 @@
       margin: 0 0 5px;
       font-size: 20px;
       color: var(--blue-dark);
+    }
+
+    .report-header .institution {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--blue);
+      letter-spacing: 0.2px;
+      margin-bottom: 3px;
+    }
+
+    .report-header h1 {
+      margin: 0 0 3px;
+      font-size: 20px;
+      color: var(--blue-dark);
+    }
+
+    .report-header .teacher {
+      margin-top: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #526676;
     }
 
     .report-header p {
@@ -448,8 +469,10 @@
          ========================================================= -->
     <aside class="report-panel">
       <header class="report-header">
-        <h1>Relatório da atividade</h1>
-        <p>Levitação Magnética — registre suas hipóteses, cálculos e conclusões.</p>
+        <div class="institution">IFG — Instituto Federal de Goiás</div>
+        <h1>Física III</h1>
+        <p>Laboratório Virtual — Levitação Magnética</p>
+        <div class="teacher">Prof. Nélio Neves Lima</div>
       </header>
 
       <nav class="steps" aria-label="Etapas do relatório">
@@ -591,6 +614,7 @@
             <input type="hidden" id="sim-fm" name="forca_magnetica">
             <input type="hidden" id="sim-p" name="peso">
             <input type="hidden" id="sim-error" name="erro_relativo">
+            <input type="hidden" id="sim-spring-deformation" name="deformacao_mola_cm">
             <input type="hidden" id="sim-state" name="estado_desafio">
 
             <p class="required-note">Os campos com validação obrigatória devem ser preenchidos antes do envio.</p>
