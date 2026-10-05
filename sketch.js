@@ -165,8 +165,14 @@ function recalculateGeometry() {
   const top = 92;
   const bottom = height * 0.77;
 
-  springXLeft = width * 0.28;
-  springXRight = width * 0.69;
+  // Reserva visual: o painel de controles ocupa o canto superior esquerdo.
+  // O aparato físico começa depois dessa área para nunca ficar escondido
+  // atrás da janela flutuante.
+  const safeLeft = min(400, max(300, width * 0.43));
+  const safeRight = width * 0.80;
+
+  springXLeft = safeLeft;
+  springXRight = safeRight;
 
   barLeft = springXLeft;
   barRight = springXRight;
@@ -299,16 +305,18 @@ function drawMagneticField() {
 // ----------------------------------------------------------------
 function drawCircuitOne() {
   const y = 118;
-  const batteryX = width * 0.47;
-  const meterX = width * 0.61;
+  const circuitLeft = springXLeft;
+  const circuitRight = min(width - 35, springXRight + 35);
+  const batteryX = circuitLeft + (circuitRight - circuitLeft) * 0.32;
+  const meterX = circuitLeft + (circuitRight - circuitLeft) * 0.63;
 
   stroke(55, 68, 78);
   strokeWeight(2);
 
-  // Fios superiores
-  line(90, y, batteryX - 10, y);
+  // O circuito superior também respeita a área reservada ao painel.
+  line(circuitLeft, y, batteryX - 10, y);
   line(batteryX + 10, y, meterX - 30, y);
-  line(meterX + 30, y, width - 55, y);
+  line(meterX + 30, y, circuitRight, y);
 
   // Bateria
   strokeWeight(3);
@@ -327,14 +335,14 @@ function drawCircuitOne() {
   textStyle(NORMAL);
 
   // Setas de corrente no circuito superior
-  drawArrow(170, y, 200, y, "#1769aa");
-  drawArrow(width - 125, y, width - 95, y, "#1769aa");
+  drawArrow(circuitLeft + 35, y, circuitLeft + 65, y, "#1769aa");
+  drawArrow(circuitRight - 65, y, circuitRight - 35, y, "#1769aa");
 
   noStroke();
   fill(74, 91, 104);
   textSize(11);
   textAlign(LEFT, CENTER);
-  text("Circuito 1 — fio suspenso", 90, y - 19);
+  text("Circuito 1 — fio suspenso", circuitLeft, y - 19);
 
   // U próximo à bateria
   text("U", batteryX - 1, y + 31);
@@ -456,15 +464,16 @@ function drawRuler() {
 // CIRCUITO 2 — ELETROÍMÃ
 // ----------------------------------------------------------------
 function drawCircuitTwo() {
-  const x0 = 34;
+  // O segundo circuito fica na faixa inferior direita, fora da área
+  // reservada aos controles e sem esconder o aparato principal.
+  const w = min(205, width * 0.22);
+  const x0 = max(18, width - w - 115);
   const y0 = height - 120;
-  const w = 190;
 
   stroke(78, 91, 102);
   strokeWeight(2);
   noFill();
 
-  // Retângulo esquemático
   line(x0, y0, x0 + 28, y0);
   line(x0 + 75, y0, x0 + 115, y0);
   line(x0 + 157, y0, x0 + w, y0);
@@ -482,7 +491,6 @@ function drawCircuitTwo() {
   rect(x0 + 115, y0 - 10, 42, 20);
   line(x0 + 105, y0 + 14, x0 + 166, y0 - 16);
 
-  // Seta de corrente
   drawArrow(x0 + 72, y0, x0 + 103, y0, "#1769aa");
 
   noStroke();
@@ -496,26 +504,25 @@ function drawCircuitTwo() {
   text("V", x0 + 47, y0 + 28);
   text("R variável", x0 + 112, y0 + 31);
 
-  // Linha tracejada até a região magnética
   stroke(23, 105, 170, 150);
   strokeWeight(1.5);
   drawingContext.setLineDash([6, 5]);
-  line(x0 + w, y0 + 10, fieldCenterX - 65, fieldCenterY + 40);
+  line(x0 + w, y0 + 10, fieldCenterX + 55, fieldCenterY + 55);
   drawingContext.setLineDash([]);
 
   noStroke();
   fill(70, 90, 105);
   textSize(10);
-  text("acoplamento ao campo", x0 + 80, y0 + 52);
+  text("acoplamento ao campo", x0 + 42, y0 + 52);
 }
 
 // ----------------------------------------------------------------
 // HUD
 // ----------------------------------------------------------------
 function drawHUD() {
-  const x = 18;
+  const x = min(400, max(300, width * 0.43));
   const y = height - 172;
-  const w = min(310, width * 0.29);
+  const w = min(300, max(260, width * 0.29));
   const h = 145;
 
   noStroke();
