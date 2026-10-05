@@ -1,4 +1,4 @@
-let y, vel, acel;
+let y, vel;
 let y0 = 150; 
 let m, k, V, i_fio;
 let L = 0.5; 
@@ -21,7 +21,6 @@ function resetSystem() {
   
   y = y0;
   vel = 0;
-  acel = 0;
   estado = "neutro";
   
   // Limpa o input do aluno
@@ -39,35 +38,48 @@ function testarValores() {
     return;
   }
 
-  // 1. O aluno aplica R. O sistema calcula a física resultante:
-  let i_bobina = V / R;          // Lei de Ohm no eletroímã
-  let B = Kb * i_bobina;         // Campo magnético gerado
-  let Fm = B * i_fio * L;        // Força magnética no fio
-  let P = m * g;                 // Força Peso
+  // A validação do cálculo do aluno
+  let i_bobina = V / R;          
+  let B = Kb * i_bobina;         
+  let Fm = B * i_fio * L;        
+  let P = m * g;                 
   
-  // 2. Verificação com margem de tolerância de 3%
+  // Margem de tolerância de 3%
   let erroRelativo = abs(Fm - P) / P;
   
   if (erroRelativo <= 0.03) {
     estado = "sucesso";
-    y = y0; // Força perfeitamente para o zero visualmente
-    vel = 0;
-    acel = 0;
   } else {
     estado = "erro";
-    msgTimer = millis() + 3500; // Tela de erro fica por 3.5 segundos
+    msgTimer = millis() + 3500; 
   }
 }
 
 function draw() {
   background(240);
   
-  // HUD - Dados para o aluno calcular
+  // NOVO MOTOR FÍSICO ESTÁVEL: Impede explosões numéricas e NaN
+  if (estado === "neutro" || estado === "erro") {
+    // Calcula o equilíbrio exato provocado apenas pelo Peso
+    let y_eq = y0 + ((m * g) / (2 * k)) * 100;
+    let dist = y_eq - y;
+    vel += dist * 0.08; // Puxa para o equilíbrio
+    vel *= 0.85;        // Amortecimento
+    y += vel;
+  } else if (estado === "sucesso") {
+    // Anima o fio retornando perfeitamente para o zero
+    let dist = y0 - y;
+    vel += dist * 0.08;
+    vel *= 0.85;
+    y += vel;
+  }
+
+  // Painel de Dados
   fill(0);
   noStroke();
   textSize(15);
   textAlign(LEFT);
-  text(`DADOS DO SISTEMA FISÍCO:`, 20, 30);
+  text(`DADOS DO SISTEMA FÍSICO:`, 20, 30);
   text(`Massa do fio (m): ${m.toFixed(3)} kg`, 20, 50);
   text(`Comprimento (L): ${L.toFixed(1)} m`, 20, 70);
   text(`Gravidade (g): ${g.toFixed(1)} m/s²`, 20, 90);
@@ -78,39 +90,25 @@ function draw() {
   text(`Constante do ímã (Kb): ${Kb.toFixed(3)} T/A`, 20, 190);
   text(`Fórmula do campo: B = Kb * (V / R)`, 20, 210);
 
-  // Física de oscilação inicial (apenas quando neutro)
-  if (estado === "neutro") {
-    let P = m * g;
-    let Fe = 2 * k * (y - y0); // Duas molas
-    let forcaResultante = (P - Fe) * 10; 
-    
-    acel = forcaResultante / m;
-    vel += acel * 0.05; 
-    vel *= 0.92; 
-    y += vel;
-  }
-
-  // Desenhos
+  // Cenário
   drawRuler();
   
-  // Teto
   fill(100);
-  rect(300, 20, 300, 20);
+  noStroke(); // Evita herança de bordas indesejadas
+  rect(300, 20, 300, 20); // Teto
   
-  // Molas
   stroke(150);
   strokeWeight(3);
   drawSpring(350, 40, y);
   drawSpring(550, 40, y);
   
-  // Fio condutor
   stroke(184, 115, 51); 
   strokeWeight(8);
-  line(330, y, 570, y);
+  line(330, y, 570, y); // Fio condutor
   
-  // Feedback Visual e de Estado
+  // Feedback Dinâmico
   if (estado === "sucesso") {
-    drawMagneticField(); // Mostra o campo ligando
+    drawMagneticField(); 
     fill(0, 150, 0);
     noStroke();
     textSize(22);
@@ -130,13 +128,12 @@ function draw() {
     textSize(14);
     text(`Reiniciando sistema com novos valores em ${tempoRestante}...`, 450, 455);
     
-    if (millis() > msgTimer) {
-      resetSystem();
-    }
+    if (millis() > msgTimer) resetSystem();
   }
 
-  // Deformação da mola
+  // CORREÇÃO: Desliga a espessura do fio antes de escrever o texto da Deformação
   fill(0);
+  noStroke(); 
   textSize(15);
   textAlign(LEFT);
   let deltaY = (y - y0) / 100;
@@ -164,10 +161,14 @@ function drawRuler() {
   rect(620, 50, 40, 350);
   
   fill(0);
+  noStroke();
   textSize(12);
   textAlign(RIGHT, CENTER);
   for(let p = 50; p <= 400; p += 25) {
+    stroke(0);
+    strokeWeight(1);
     line(620, p, 635, p);
+    noStroke();
     if(p === y0) {
       fill(255, 0, 0);
       text("0", 610, p); 
@@ -188,7 +189,6 @@ function drawMagneticField() {
     for (let r = 0; r < rows; r++) {
       let px = 330 + c * 48;
       let py = 100 + r * 50;
-      // Desenhando os X (Campo Entrando)
       line(px - 6, py - 6, px + 6, py + 6);
       line(px + 6, py - 6, px - 6, py + 6);
     }
