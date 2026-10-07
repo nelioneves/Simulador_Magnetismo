@@ -169,8 +169,13 @@ function recalculateGeometry() {
   const top = 92;
   const bottom = height * 0.77;
 
-  springXLeft = width * 0.28;
-  springXRight = width * 0.69;
+  // Reserva visual para o painel de controles à esquerda.
+  // O sistema físico fica completamente fora dessa área.
+  const apparatusLeft = min(width * 0.47, width - 360);
+  const apparatusRight = min(width * 0.75, width - 150);
+
+  springXLeft = apparatusLeft;
+  springXRight = apparatusRight;
 
   barLeft = springXLeft;
   barRight = springXRight;
@@ -198,11 +203,11 @@ function recalculateGeometry() {
     targetY = min(mechanicalEqY, bottom - 28);
   }
 
-  rulerX = width * 0.82;
+  rulerX = min(width * 0.84, width - 115);
   rulerTop = naturalY - 70;
   rulerBottom = min(bottom + 45, height - 35);
 
-  fieldCenterX = width * 0.49;
+  fieldCenterX = (springXLeft + springXRight) / 2;
   fieldCenterY = height * 0.47;
 }
 
@@ -310,6 +315,7 @@ function drawMagneticField() {
 // ----------------------------------------------------------------
 function drawCircuitOne() {
   const y = 130;
+  const topY = 138;
   const batteryX = width * 0.47;
   const meterX = width * 0.61;
 
@@ -337,9 +343,15 @@ function drawCircuitOne() {
   text("A", meterX, y + 1);
   textStyle(NORMAL);
 
-  // Setas de corrente no circuito superior
-  drawArrow(170, y, 200, y, "#1769aa");
-  drawArrow(width - 125, y, width - 95, y, "#1769aa");
+  // Sentido convencional da corrente, coerente com o esquema:
+  // desce pela mola esquerda, percorre a barra para a direita,
+  // sobe pela mola direita e retorna pelo trecho superior à esquerda.
+  drawArrow(150, y, 120, y, "#1769aa");
+  drawArrow(width - 115, y, width - 145, y, "#1769aa");
+
+  // Setas verticais nas molas
+  drawArrow(springXLeft, topY + 5, springXLeft, topY + 30, "#1769aa");
+  drawArrow(springXRight, topY + 30, springXRight, topY + 5, "#1769aa");
 
   noStroke();
   fill(74, 91, 104);
@@ -444,8 +456,9 @@ function drawWireAndSprings() {
   fill("#18864b");
   textSize(10);
   textStyle(BOLD);
-  text(`deslocamento da barra: ${displacementCm.toFixed(2)} cm`,
-       fieldCenterX, barY + 50);
+  textAlign(LEFT, CENTER);
+  text(`deslocamento: ${displacementCm.toFixed(2)} cm`,
+       springXRight - 8, barY + 42);
   textStyle(NORMAL);
 
   textAlign(LEFT, BASELINE);
@@ -538,15 +551,15 @@ function drawRuler() {
 // CIRCUITO 2 — ELETROÍMÃ
 // ----------------------------------------------------------------
 function drawCircuitTwo() {
-  const x0 = 34;
-  const y0 = height - 120;
+  // Circuito 2 em uma região livre do painel de controles e do HUD.
+  const x0 = max(380, width * 0.43);
+  const y0 = height - 105;
   const w = 190;
 
   stroke(78, 91, 102);
   strokeWeight(2);
   noFill();
 
-  // Retângulo esquemático
   line(x0, y0, x0 + 28, y0);
   line(x0 + 75, y0, x0 + 115, y0);
   line(x0 + 157, y0, x0 + w, y0);
@@ -554,17 +567,14 @@ function drawCircuitTwo() {
   line(x0 + w, y0, x0 + w, y0 + 58);
   line(x0, y0 + 58, x0 + w, y0 + 58);
 
-  // Bateria
   strokeWeight(3);
   line(x0 + 42, y0 - 9, x0 + 42, y0 + 9);
   line(x0 + 54, y0 - 6, x0 + 54, y0 + 6);
 
-  // Resistor variável
   strokeWeight(2);
   rect(x0 + 115, y0 - 10, 42, 20);
   line(x0 + 105, y0 + 14, x0 + 166, y0 - 16);
 
-  // Seta de corrente
   drawArrow(x0 + 72, y0, x0 + 103, y0, "#1769aa");
 
   noStroke();
@@ -573,24 +583,21 @@ function drawCircuitTwo() {
   textStyle(BOLD);
   text("Circuito 2 — eletroímã", x0, y0 - 28);
   textStyle(NORMAL);
-
   textSize(10);
   text("V", x0 + 47, y0 + 28);
   text("R variável", x0 + 112, y0 + 31);
 
-  // Linha tracejada até a região magnética
   stroke(23, 105, 170, 150);
   strokeWeight(1.5);
   drawingContext.setLineDash([6, 5]);
-  line(x0 + w, y0 + 10, fieldCenterX - 65, fieldCenterY + 40);
+  line(x0 + w, y0 + 10, fieldCenterX + 45, fieldCenterY + 55);
   drawingContext.setLineDash([]);
 
   noStroke();
   fill(70, 90, 105);
   textSize(10);
-  text("acoplamento ao campo", x0 + 80, y0 + 52);
+  text("acoplamento ao campo", x0 + 42, y0 + 52);
 }
-
 // ----------------------------------------------------------------
 // HUD
 // ----------------------------------------------------------------
