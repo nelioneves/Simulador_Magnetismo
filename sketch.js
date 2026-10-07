@@ -166,29 +166,37 @@ function draw() {
 // GEOMETRIA
 // ----------------------------------------------------------------
 function recalculateGeometry() {
-  const top = 92;
-  const bottom = height * 0.77;
+  // O desenho é adaptativo. Em desktop reservamos uma faixa à esquerda
+  // para os controles; em telas estreitas, o aparato fica abaixo deles.
+  const mobile = width < 900;
+  const controlSafeLeft = mobile ? 38 : min(430, width * 0.36);
+  const controlSafeTop = mobile ? 320 : 105;
 
-  // Reserva visual para o painel de controles à esquerda.
-  // O sistema físico fica completamente fora dessa área.
-  const apparatusLeft = min(width * 0.47, width - 360);
-  const apparatusRight = min(width * 0.75, width - 150);
+  const apparatusWidth = mobile
+    ? min(width - 90, 430)
+    : min(width * 0.42, 520);
 
-  springXLeft = apparatusLeft;
-  springXRight = apparatusRight;
+  springXLeft = controlSafeLeft;
+  springXRight = min(springXLeft + apparatusWidth, width - (mobile ? 45 : 170));
+
+  // Se a tela for muito estreita, centraliza o conjunto disponível.
+  if (springXRight - springXLeft < 180) {
+    springXLeft = mobile ? 45 : max(390, width * 0.38);
+    springXRight = min(width - 45, springXLeft + 260);
+  }
 
   barLeft = springXLeft;
   barRight = springXRight;
 
-  naturalY = height * 0.43;
+  naturalY = mobile
+    ? min(controlSafeTop + 150, height * 0.64)
+    : height * 0.43;
 
-  // Deformação de CADA mola:
-  // 2 k x = m g  ->  x = m g / (2 k)
   springDeformation = (massa * g) / (2 * k);
 
-  // Escala visual: o deslocamento mecânico é ampliado
-  // para permanecer claramente visível no laboratório.
-  const scalePxPerMeter = min(2300, height * 3.0);
+  const scalePxPerMeter = mobile
+    ? min(1050, height * 1.55)
+    : min(2300, height * 3.0);
 
   const mechanicalEqY =
     naturalY + springDeformation * scalePxPerMeter;
@@ -197,20 +205,22 @@ function recalculateGeometry() {
     barY = mechanicalEqY;
   }
 
+  const bottom = mobile ? height - 120 : height * 0.77;
+
   if (challengeState === "success") {
     targetY = naturalY;
   } else {
     targetY = min(mechanicalEqY, bottom - 28);
   }
 
-  rulerX = min(width * 0.84, width - 115);
+  // Régua próxima ao conjunto, mas nunca sobre os controles.
+  rulerX = min(springXRight + 105, width - 75);
   rulerTop = naturalY - 70;
   rulerBottom = min(bottom + 45, height - 35);
 
   fieldCenterX = (springXLeft + springXRight) / 2;
-  fieldCenterY = height * 0.47;
+  fieldCenterY = naturalY + min(110, height * 0.13);
 }
-
 // ----------------------------------------------------------------
 // MOTOR DE AMORTECIMENTO
 // ----------------------------------------------------------------
@@ -275,10 +285,11 @@ function drawCeiling() {
 // CAMPO MAGNÉTICO — MATRIZ DE X
 // ----------------------------------------------------------------
 function drawMagneticField() {
-  const cols = 7;
-  const rows = 5;
-  const spacingX = min(36, width * 0.042);
-  const spacingY = 31;
+  const mobile = width < 900;
+  const cols = mobile ? 5 : 6;
+  const rows = mobile ? 4 : 5;
+  const spacingX = mobile ? 27 : min(32, width * 0.032);
+  const spacingY = mobile ? 25 : 29;
 
   const totalW = (cols - 1) * spacingX;
   const totalH = (rows - 1) * spacingY;
@@ -314,18 +325,21 @@ function drawMagneticField() {
 // CIRCUITO 1 — FIO SUSPENSO
 // ----------------------------------------------------------------
 function drawCircuitOne() {
-  const y = 130;
-  const topY = 138;
-  const batteryX = width * 0.47;
-  const meterX = width * 0.61;
+  const mobile = width < 900;
+  const y = mobile ? 345 : 118;
+
+  // A bateria e o amperímetro ficam alinhados entre as duas molas.
+  const circuitLeft = springXLeft;
+  const circuitRight = springXRight;
+  const batteryX = (circuitLeft + circuitRight) * 0.42;
+  const meterX = (circuitLeft + circuitRight) * 0.68;
 
   stroke(55, 68, 78);
   strokeWeight(2);
 
-  // Fios superiores
-  line(90, y, batteryX - 10, y);
+  line(circuitLeft, y, batteryX - 10, y);
   line(batteryX + 10, y, meterX - 30, y);
-  line(meterX + 30, y, width - 55, y);
+  line(meterX + 30, y, circuitRight, y);
 
   // Bateria
   strokeWeight(3);
@@ -343,35 +357,26 @@ function drawCircuitOne() {
   text("A", meterX, y + 1);
   textStyle(NORMAL);
 
-  // Sentido convencional da corrente, coerente com o esquema:
-  // desce pela mola esquerda, percorre a barra para a direita,
-  // sobe pela mola direita e retorna pelo trecho superior à esquerda.
-  drawArrow(150, y, 120, y, "#1769aa");
-  drawArrow(width - 115, y, width - 145, y, "#1769aa");
-
-  // Setas verticais nas molas
-  drawArrow(springXLeft, topY + 5, springXLeft, topY + 30, "#1769aa");
-  drawArrow(springXRight, topY + 30, springXRight, topY + 5, "#1769aa");
+  // Corrente convencional: no trecho superior retorna para a bateria.
+  drawArrow(circuitRight - 55, y, circuitRight - 85, y, "#1769aa");
+  drawArrow(circuitLeft + 70, y, circuitLeft + 40, y, "#1769aa");
 
   noStroke();
   fill(74, 91, 104);
-  textSize(11);
-  textAlign(LEFT, CENTER);
-  text("Circuito 1 — fio suspenso", 90, y - 19);
+  textSize(10);
+  textAlign(CENTER, CENTER);
+  text("Circuito 1 — fio suspenso", (circuitLeft + circuitRight) / 2, y - 24);
 
-  // U próximo à bateria
-  text("U", batteryX - 1, y + 31);
-
+  text("U", batteryX, y + 30);
   textAlign(LEFT, BASELINE);
 }
-
 // ----------------------------------------------------------------
 // MOLAS + BARRA
 // ----------------------------------------------------------------
 function drawWireAndSprings() {
-  const topY = 138;
+  const mobile = width < 900;
+  const topY = mobile ? 365 : 138;
 
-  // Linhas verticais de ligação
   stroke(55, 68, 78);
   strokeWeight(2);
   line(springXLeft, topY, springXLeft, topY + 20);
@@ -380,48 +385,37 @@ function drawWireAndSprings() {
   drawSpring(springXLeft, topY + 20, barY - 7);
   drawSpring(springXRight, topY + 20, barY - 7);
 
-  // Barra condutora horizontal
+  // Barra condutora
   stroke(44, 48, 53);
-  strokeWeight(8);
+  strokeWeight(mobile ? 7 : 8);
   line(barLeft, barY, barRight, barY);
 
-  // Núcleo metálico
   stroke(116, 128, 138);
-  strokeWeight(4);
+  strokeWeight(3);
   line(barLeft + 4, barY - 3, barRight - 4, barY - 3);
 
-  // Corrente no fio
+  // Corrente na barra: esquerda -> direita.
   drawArrow(
     barLeft + (barRight - barLeft) * 0.38,
-    barY + 20,
+    barY + 18,
     barLeft + (barRight - barLeft) * 0.62,
-    barY + 20,
+    barY + 18,
     "#1769aa"
   );
 
   noStroke();
   fill(55, 68, 78);
-  textSize(12);
-  textAlign(CENTER, CENTER);
-  text("i", fieldCenterX, barY + 34);
-
-  // Identificação da barra
   textSize(11);
+  textAlign(CENTER, CENTER);
+  text("i", (barLeft + barRight) / 2, barY + 32);
+  textSize(10);
   fill(75, 91, 103);
-  text("barra condutora de cobre", fieldCenterX, barY - 17);
+  text("barra condutora de cobre", (barLeft + barRight) / 2, barY - 16);
 
-  // ------------------------------------------------------------
-  // COTA DA DEFORMAÇÃO DAS MOLAS
-  // ------------------------------------------------------------
-  // Mostramos a deformação física calculada, em cm, ao lado
-  // da mola direita. No sucesso, ela vai para zero.
-  const deformationNow =
-    challengeState === "success" ? 0 : springDeformation;
-
+  // Cota da deformação de cada mola.
+  const deformationNow = challengeState === "success" ? 0 : springDeformation;
   const deformationCm = deformationNow * 100;
-
-  // Linha de cota
-  const dimX = springXRight + 28;
+  const dimX = min(springXRight + 28, width - 120);
   const springTop = topY + 20;
   const springBottom = barY - 7;
 
@@ -430,37 +424,31 @@ function drawWireAndSprings() {
   drawingContext.setLineDash([4, 4]);
   line(dimX, springTop, dimX, springBottom);
   drawingContext.setLineDash([]);
-
-  // Marcadores da cota
   line(dimX - 5, springTop, dimX + 5, springTop);
   line(dimX - 5, springBottom, dimX + 5, springBottom);
 
   noStroke();
   fill("#1769aa");
-  textSize(11);
+  textSize(10);
   textStyle(BOLD);
   textAlign(LEFT, CENTER);
-  text(`Δx = ${deformationCm.toFixed(2)} cm`, dimX + 9,
+  text(`Δx = ${deformationCm.toFixed(2)} cm`, dimX + 8,
        (springTop + springBottom) / 2 - 7);
   textStyle(NORMAL);
   textSize(9);
   fill("#536979");
-  text("cada mola", dimX + 9,
+  text("cada mola", dimX + 8,
        (springTop + springBottom) / 2 + 8);
 
-  // Cota do deslocamento da barra em relação à posição natural
-  const displacementMeters =
-    challengeState === "success" ? 0 : max(0, (barY - naturalY) / min(2300, height * 3.0));
-  const displacementCm = displacementMeters * 100;
+  const scalePxPerMeter = mobile ? min(1050, height * 1.55) : min(2300, height * 3.0);
+  const displacementCm = max(0, (barY - naturalY) / scalePxPerMeter * 100);
 
   fill("#18864b");
   textSize(10);
   textStyle(BOLD);
-  textAlign(LEFT, CENTER);
   text(`deslocamento: ${displacementCm.toFixed(2)} cm`,
-       springXRight - 8, barY + 42);
+       springXRight - 5, barY + 43);
   textStyle(NORMAL);
-
   textAlign(LEFT, BASELINE);
 }
 function drawSpring(x, y1, y2) {
@@ -496,19 +484,15 @@ function drawRuler() {
   strokeWeight(2);
   line(rulerX, rulerTop, rulerX, rulerBottom);
 
-  // Escala da régua: 1 cm em uma distância visual constante.
-  const rulerPxPerMeter = 330;
-
-  // Marcações a cada 10 cm, com subdivisão visual.
+  const rulerPxPerMeter = width < 900 ? 220 : 330;
   const maxCm = floor(max(10, (rulerBottom - naturalY) / rulerPxPerMeter * 100));
 
   for (let cm = 0; cm <= maxCm; cm += 5) {
     const y = naturalY + (cm / 100) * rulerPxPerMeter;
     if (y > rulerBottom) break;
 
-    const major = (cm % 10 === 0);
-    const tick = major ? 15 : 9;
-
+    const major = cm % 10 === 0;
+    const tick = major ? 14 : 8;
     stroke(75, 87, 98);
     strokeWeight(major ? 1.5 : 1);
     line(rulerX - tick, y, rulerX + tick, y);
@@ -521,96 +505,76 @@ function drawRuler() {
     }
   }
 
-  // Zero da posição natural
   stroke("#18864b");
   strokeWeight(2.5);
   line(rulerX - 20, naturalY, rulerX + 20, naturalY);
 
   noStroke();
   fill("#18864b");
-  textSize(11);
-  textStyle(BOLD);
-  text("0 — posição natural", rulerX - 95, naturalY - 11);
-  textStyle(NORMAL);
-
-  // Posição atual da barra
-  const currentDisplacementCm =
-    challengeState === "success"
-      ? 0
-      : max(0, (barY - naturalY) / rulerPxPerMeter * 100);
-
-  fill("#1769aa");
   textSize(10);
   textStyle(BOLD);
-  text(`barra: ${currentDisplacementCm.toFixed(2)} cm abaixo`,
-       rulerX - 115, barY + 4);
+  text("0 — posição natural", rulerX - 90, naturalY - 10);
   textStyle(NORMAL);
 }
-
 // ----------------------------------------------------------------
 // CIRCUITO 2 — ELETROÍMÃ
 // ----------------------------------------------------------------
 function drawCircuitTwo() {
-  // Circuito 2 em uma região livre do painel de controles e do HUD.
-  const x0 = max(380, width * 0.43);
-  const y0 = height - 105;
-  const w = 190;
+  const mobile = width < 900;
+  const x0 = mobile ? 20 : max(420, width * 0.48);
+  const y0 = height - (mobile ? 72 : 82);
+  const w = mobile ? 145 : 175;
 
   stroke(78, 91, 102);
-  strokeWeight(2);
+  strokeWeight(1.6);
   noFill();
 
-  line(x0, y0, x0 + 28, y0);
-  line(x0 + 75, y0, x0 + 115, y0);
-  line(x0 + 157, y0, x0 + w, y0);
-  line(x0, y0, x0, y0 + 58);
-  line(x0 + w, y0, x0 + w, y0 + 58);
-  line(x0, y0 + 58, x0 + w, y0 + 58);
+  line(x0, y0, x0 + 24, y0);
+  line(x0 + 62, y0, x0 + 92, y0);
+  line(x0 + 132, y0, x0 + w, y0);
+  line(x0, y0, x0, y0 + 42);
+  line(x0 + w, y0, x0 + w, y0 + 42);
+  line(x0, y0 + 42, x0 + w, y0 + 42);
 
-  strokeWeight(3);
-  line(x0 + 42, y0 - 9, x0 + 42, y0 + 9);
-  line(x0 + 54, y0 - 6, x0 + 54, y0 + 6);
+  strokeWeight(2.5);
+  line(x0 + 34, y0 - 7, x0 + 34, y0 + 7);
+  line(x0 + 45, y0 - 5, x0 + 45, y0 + 5);
 
-  strokeWeight(2);
-  rect(x0 + 115, y0 - 10, 42, 20);
-  line(x0 + 105, y0 + 14, x0 + 166, y0 - 16);
+  strokeWeight(1.6);
+  rect(x0 + 92, y0 - 8, 40, 16);
+  line(x0 + 84, y0 + 12, x0 + 140, y0 - 12);
 
-  drawArrow(x0 + 72, y0, x0 + 103, y0, "#1769aa");
+  drawArrow(x0 + 59, y0, x0 + 80, y0, "#1769aa");
 
   noStroke();
   fill(68, 83, 95);
-  textSize(11);
+  textSize(9);
   textStyle(BOLD);
-  text("Circuito 2 — eletroímã", x0, y0 - 28);
+  text("Circuito 2 — eletroímã", x0, y0 - 18);
   textStyle(NORMAL);
-  textSize(10);
-  text("V", x0 + 47, y0 + 28);
-  text("R variável", x0 + 112, y0 + 31);
+  textSize(8);
+  text("V", x0 + 38, y0 + 20);
+  text("R variável", x0 + 90, y0 + 20);
 
-  stroke(23, 105, 170, 150);
-  strokeWeight(1.5);
-  drawingContext.setLineDash([6, 5]);
-  line(x0 + w, y0 + 10, fieldCenterX + 45, fieldCenterY + 55);
+  stroke(23, 105, 170, 135);
+  strokeWeight(1.2);
+  drawingContext.setLineDash([5, 4]);
+  line(x0 + w, y0 + 7, fieldCenterX + 25, fieldCenterY + 30);
   drawingContext.setLineDash([]);
-
-  noStroke();
-  fill(70, 90, 105);
-  textSize(10);
-  text("acoplamento ao campo", x0 + 42, y0 + 52);
 }
 // ----------------------------------------------------------------
 // HUD
 // ----------------------------------------------------------------
 function drawHUD() {
-  const x = 18;
-  const y = height - 185;
-  const w = min(310, width * 0.29);
-  const h = 158;
+  const mobile = width < 900;
+  const w = mobile ? min(290, width - 30) : min(270, width * 0.25);
+  const h = mobile ? 112 : 130;
+  const x = mobile ? 15 : max(18, width - w - 22);
+  const y = mobile ? height - h - 18 : 68;
 
   noStroke();
-  fill(255, 255, 255, 238);
+  fill(255, 255, 255, 242);
   rect(x, y, w, h, 10);
-
   stroke(211, 222, 230);
   strokeWeight(1);
   noFill();
@@ -618,51 +582,46 @@ function drawHUD() {
 
   noStroke();
   fill("#0d4775");
-  textSize(13);
+  textSize(12);
   textStyle(BOLD);
-  text("HUD — grandezas do modelo", x + 12, y + 20);
+  text("HUD — grandezas do modelo", x + 11, y + 19);
   textStyle(NORMAL);
 
   const P = massa * g;
   const Rideal = requiredResistance();
   const Bideal = Kb * (V / Rideal);
+  const dx = ((challengeState === "success" ? 0 : springDeformation) * 100).toFixed(2);
 
   fill("#34495e");
-  textSize(11);
-
+  textSize(9.5);
   const lines = [
     `m = ${massa.toFixed(3)} kg`,
     `k = ${k.toFixed(1)} N/m`,
     `V = ${V.toFixed(2)} V`,
     `i_fio = ${i_fio.toFixed(2)} A`,
-    `L = ${L.toFixed(3)} m`,
     `P = ${P.toFixed(3)} N`,
-    `Δx_mola = ${((challengeState === "success" ? 0 : springDeformation) * 100).toFixed(2)} cm`,
+    `Δx_mola = ${dx} cm`,
     `B* = ${Bideal.toFixed(3)} T`
   ];
 
   for (let i = 0; i < lines.length; i++) {
-    text(lines[i], x + 12, y + 40 + i * 14);
+    text(lines[i], x + 11, y + 36 + i * 12);
   }
 
-  // Estado
   let stateText = "Aguardando R...";
   let stateColor = "#66788a";
-
   if (challengeState === "success") {
-    stateText = "SUCESSO — levitação!";
+    stateText = "SUCESSO";
     stateColor = "#18864b";
   } else if (challengeState === "error") {
-    stateText = "ERRO — tente novamente";
+    stateText = "ERRO";
     stateColor = "#c62828";
   }
-
   fill(stateColor);
   textStyle(BOLD);
-  text(stateText, x + 155, y + 40);
+  text(stateText, x + w - 72, y + 19);
   textStyle(NORMAL);
 }
-
 // ----------------------------------------------------------------
 // MENSAGEM DE SUCESSO
 // ----------------------------------------------------------------
