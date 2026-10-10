@@ -43,10 +43,11 @@
     }
 
     /* =======================
-       LADO ESQUERDO
+       LADO ESQUERDO (SIMULADOR)
        ======================= */
     .simulator-panel {
-      position: relative;
+      display: flex;
+      flex-direction: row;
       flex: 1 1 auto;
       min-width: 0;
       height: 100vh;
@@ -54,26 +55,29 @@
       overflow: hidden;
     }
 
-    #canvas-holder {
-      position: absolute;
-      inset: 0;
-    }
-
-    #canvas-holder canvas {
-      display: block;
+    /* Coluna de Controles */
+    .controls-column {
+      width: 320px;
+      min-width: 320px;
+      height: 100%;
+      padding: 18px;
+      background: #ffffff;
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
     }
 
     .sim-controls {
-      position: absolute;
-      z-index: 10;
-      top: 18px;
-      left: 18px;
-      width: min(350px, calc(100% - 36px));
+      position: relative;
+      width: 100%;
       padding: 16px;
       background: rgba(255,255,255,0.96);
       border: 1px solid var(--border);
       border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(20, 45, 70, 0.12);
+      box-shadow: 0 4px 12px rgba(20, 45, 70, 0.05);
     }
 
     .sim-controls h2 {
@@ -154,12 +158,29 @@
       color: var(--muted);
     }
 
+    /* Coluna do Canvas */
+    .canvas-column {
+      flex: 1 1 auto;
+      position: relative;
+      overflow: hidden;
+      background: #eef3f7;
+    }
+
+    #canvas-holder {
+      position: absolute;
+      inset: 0;
+    }
+
+    #canvas-holder canvas {
+      display: block;
+    }
+
     /* =======================
-       LADO DIREITO
+       LADO DIREITO (RELATÓRIO)
        ======================= */
     .report-panel {
-      flex: 0 0 450px;
-      width: 450px;
+      flex: 0 0 380px;
+      width: 380px;
       height: 100vh;
       background: var(--white);
       border-left: 1px solid var(--border);
@@ -171,12 +192,6 @@
     .report-header {
       padding: 18px 20px 12px;
       border-bottom: 1px solid var(--border);
-    }
-
-    .report-header h1 {
-      margin: 0 0 5px;
-      font-size: 20px;
-      color: var(--blue-dark);
     }
 
     .report-header .institution {
@@ -387,6 +402,20 @@
       margin-top: 4px;
     }
 
+    /* =======================
+       RESPONSIVIDADE
+       ======================= */
+    @media (max-width: 1100px) {
+      .report-panel {
+        flex: 0 0 320px;
+        width: 320px;
+      }
+      .controls-column {
+        width: 280px;
+        min-width: 280px;
+      }
+    }
+
     @media (max-width: 900px) {
       html, body {
         overflow-x: hidden;
@@ -401,36 +430,21 @@
       }
 
       .simulator-panel {
+        flex-direction: column;
+        height: auto;
+      }
+
+      .controls-column {
         width: 100%;
-        height: 760px;
-        min-height: 760px;
-        flex: none;
-        overflow: hidden;
+        min-width: 0;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        height: auto;
       }
 
-      .sim-controls {
-        top: 12px;
-        left: 12px;
-        width: calc(100% - 24px);
-        max-width: none;
-        padding: 13px;
-      }
-
-      .sim-controls h2 {
-        font-size: 16px;
-        margin-bottom: 9px;
-      }
-
-      .control-group {
-        margin: 7px 0;
-      }
-
-      .control-group label {
-        font-size: 12px;
-      }
-
-      .hint {
-        font-size: 11px;
+      .canvas-column {
+        height: 600px;
+        min-height: 600px;
       }
 
       .report-panel {
@@ -442,56 +456,13 @@
         border-top: 1px solid var(--border);
       }
 
-      .report-header {
-        padding: 14px 16px 10px;
-      }
-
-      .report-header h1 {
-        font-size: 18px;
-      }
-
-      .steps {
-        padding: 8px 10px;
-      }
-
-      .step-indicator {
-        font-size: 9px;
-        padding: 6px 2px;
-      }
-
-      .form-body {
-        padding: 15px 16px;
-      }
-
-      .form-footer {
-        padding: 10px 16px;
-      }
+      .report-header { padding: 14px 16px 10px; }
+      .report-header h1 { font-size: 18px; }
+      .steps { padding: 8px 10px; }
+      .step-indicator { font-size: 9px; padding: 6px 2px; }
+      .form-body { padding: 15px 16px; }
+      .form-footer { padding: 10px 16px; }
     }
-
-    @media (max-width: 480px) {
-      .simulator-panel {
-        height: 720px;
-        min-height: 720px;
-      }
-
-      .mass-row {
-        grid-template-columns: 1fr 72px;
-        gap: 7px;
-      }
-
-      .r-actions {
-        grid-template-columns: 1fr auto;
-      }
-
-      .steps {
-        gap: 3px;
-      }
-
-      .step-indicator {
-        font-size: 8px;
-      }
-    }
-
   </style>
 </head>
 
@@ -502,48 +473,40 @@
          SIMULADOR
          ========================================================= -->
     <section class="simulator-panel">
-      <div id="canvas-holder"></div>
+      
+      <!-- Coluna da Esquerda: Controles -->
+      <div class="controls-column">
+        <div class="sim-controls">
+          <h2>Controles do simulador</h2>
 
-      <div class="sim-controls">
-        <h2>Controles do simulador</h2>
-
-        <div class="control-group">
-          <label for="mass-slider">Massa da barra condutora</label>
-          <div class="mass-row">
-            <input id="mass-slider"
-                   type="range"
-                   min="0.050"
-                   max="0.250"
-                   step="0.001"
-                   value="0.150">
-            <input id="mass-display"
-                   type="number"
-                   min="0.050"
-                   max="0.250"
-                   step="0.001"
-                   value="0.150"
-                   aria-label="Massa em quilogramas">
+          <div class="control-group">
+            <label for="mass-slider">Massa da barra condutora</label>
+            <div class="mass-row">
+              <input id="mass-slider" type="range" min="0.050" max="0.250" step="0.001" value="0.150">
+              <input id="mass-display" type="number" min="0.050" max="0.250" step="0.001" value="0.150" aria-label="Massa em quilogramas">
+            </div>
+            <div class="value-readout">Massa: <strong id="mass-value">0,150 kg</strong></div>
           </div>
-          <div class="value-readout">Massa: <strong id="mass-value">0,150 kg</strong></div>
-        </div>
 
-        <div class="control-group">
-          <label for="resistance-input">Resistência calculada, R (Ω)</label>
-          <div class="r-actions">
-            <input id="resistance-input"
-                   name="resistance_simulator"
-                   type="number"
-                   min="0.001"
-                   step="0.001"
-                   placeholder="Ex.: 0,850">
-            <button id="apply-r" class="btn-primary" type="button">Aplicar R</button>
+          <div class="control-group">
+            <label for="resistance-input">Resistência calculada, R (Ω)</label>
+            <div class="r-actions">
+              <input id="resistance-input" name="resistance_simulator" type="number" min="0.001" step="0.001" placeholder="Ex.: 0,850">
+              <button id="apply-r" class="btn-primary" type="button">Aplicar R</button>
+            </div>
+            <p class="hint">
+              Calcule o valor de R que faz a força magnética compensar o peso:
+              <strong>F<sub>m</sub> ≈ P</strong>. O limite de aceitação é ±3%.
+            </p>
           </div>
-          <p class="hint">
-            Calcule o valor de R que faz a força magnética compensar o peso:
-            <strong>F<sub>m</sub> ≈ P</strong>. O limite de aceitação é ±3%.
-          </p>
         </div>
       </div>
+
+      <!-- Coluna da Direita: Canvas -->
+      <div class="canvas-column">
+        <div id="canvas-holder"></div>
+      </div>
+      
     </section>
 
     <!-- =========================================================
@@ -571,25 +534,19 @@
           <!-- ETAPA 1 -->
           <section class="form-step active">
             <h2>1. Identificação</h2>
-            <p class="step-description">
-              Informe seus dados para identificar o relatório.
-            </p>
-
+            <p class="step-description">Informe seus dados para identificar o relatório.</p>
             <div class="field">
               <label for="student-name">Nome</label>
               <input id="student-name" name="nome" type="text" required>
             </div>
-
             <div class="field">
               <label for="student-class">Turma</label>
               <input id="student-class" name="turma" type="text" required>
             </div>
-
             <div class="field">
               <label for="student-date">Data</label>
               <input id="student-date" name="data" type="date" required>
             </div>
-
             <div class="field">
               <label for="initial-hypothesis">Antes de executar o desafio, o que você espera que aconteça quando a força magnética se aproximar do peso?</label>
               <textarea id="initial-hypothesis" name="hipotese_inicial" required></textarea>
@@ -599,20 +556,15 @@
           <!-- ETAPA 2 -->
           <section class="form-step">
             <h2>2. Análise Mecânica</h2>
-            <p class="step-description">
-              Analise as forças envolvidas na barra condutora.
-            </p>
-
+            <p class="step-description">Analise as forças envolvidas na barra condutora.</p>
             <div class="question">
               <p><strong>1.</strong> Escreva a expressão para o peso da barra.</p>
               <input type="text" name="mecanica_peso" placeholder="Ex.: P = m · g">
             </div>
-
             <div class="question">
               <p><strong>2.</strong> Considerando duas molas idênticas, explique como a constante elástica <em>k</em> influencia a posição de equilíbrio.</p>
               <textarea name="mecanica_molas"></textarea>
             </div>
-
             <div class="question">
               <p><strong>3.</strong> Qual é o papel do amortecimento/interpolação usado no simulador?</p>
               <textarea name="mecanica_amortecimento"></textarea>
@@ -622,20 +574,15 @@
           <!-- ETAPA 3 -->
           <section class="form-step">
             <h2>3. Eletromagnetismo</h2>
-            <p class="step-description">
-              Use as relações entre campo, corrente, tensão e resistência.
-            </p>
-
+            <p class="step-description">Use as relações entre campo, corrente, tensão e resistência.</p>
             <div class="question">
               <p><strong>1.</strong> Registre a expressão da força magnética sobre o fio.</p>
               <input type="text" name="eletro_fm" placeholder="Ex.: Fm = B · i · L">
             </div>
-
             <div class="question">
               <p><strong>2.</strong> O simulador utiliza <strong>B = K<sub>b</sub> · (V/R)</strong>. Explique qualitativamente o que ocorre com B quando R aumenta.</p>
               <textarea name="eletro_resistencia"></textarea>
             </div>
-
             <div class="question">
               <p><strong>3.</strong> Registre o cálculo da resistência que você aplicou no desafio.</p>
               <textarea name="eletro_calculo_r" placeholder="Mostre as etapas do cálculo."></textarea>
@@ -645,20 +592,15 @@
           <!-- ETAPA 4 -->
           <section class="form-step">
             <h2>4. Vetores</h2>
-            <p class="step-description">
-              Observe as direções das forças e da corrente no esquema.
-            </p>
-
+            <p class="step-description">Observe as direções das forças e da corrente no esquema.</p>
             <div class="question">
               <p><strong>1.</strong> Indique a direção e o sentido do peso sobre a barra.</p>
               <textarea name="vetor_peso"></textarea>
             </div>
-
             <div class="question">
               <p><strong>2.</strong> Qual deve ser a direção da força magnética para que ocorra a levitação?</p>
               <textarea name="vetor_magnetica"></textarea>
             </div>
-
             <div class="question">
               <p><strong>3.</strong> Como a regra da mão direita pode ajudar a analisar o sentido da força magnética?</p>
               <textarea name="vetor_mao_direita"></textarea>
@@ -668,20 +610,15 @@
           <!-- ETAPA 5 -->
           <section class="form-step">
             <h2>5. Reflexão</h2>
-            <p class="step-description">
-              Relacione o resultado da simulação com o modelo físico estudado.
-            </p>
-
+            <p class="step-description">Relacione o resultado da simulação com o modelo físico estudado.</p>
             <div class="question">
               <p><strong>1.</strong> O que aconteceu quando o erro relativo ficou ≤ 3%?</p>
               <textarea name="reflexao_resultado" required></textarea>
             </div>
-
             <div class="question">
               <p><strong>2.</strong> Quais grandezas você precisou conhecer para determinar R?</p>
               <textarea name="reflexao_grandezas"></textarea>
             </div>
-
             <div class="question">
               <p><strong>3.</strong> Cite uma limitação deste modelo de laboratório virtual em comparação com um experimento real.</p>
               <textarea name="reflexao_limitacao"></textarea>
@@ -728,10 +665,6 @@
       ============================================================
       Substitua a URL abaixo pela URL implantada do seu Google Apps
       Script (Web App).
-
-      Exemplo:
-      const APPS_SCRIPT_URL =
-        "https://script.google.com/macros/s/SEU_ID/exec";
     */
     const APPS_SCRIPT_URL = "COLE_AQUI_A_URL_DO_SEU_GOOGLE_APPS_SCRIPT";
 
@@ -773,16 +706,13 @@
 
     function validateCurrentStep() {
       const fields = [...steps[currentStep].querySelectorAll("input, textarea, select")];
-
       for (const field of fields) {
         if (field.type === "hidden" || field.disabled) continue;
-
         if (!field.checkValidity()) {
           field.reportValidity();
           return false;
         }
       }
-
       return true;
     }
 
@@ -802,15 +732,13 @@
 
       if (!validateCurrentStep()) return;
 
-      // Atualiza os campos hidden com os últimos valores disponíveis
       if (typeof updateSimulatorHiddenFields === "function") {
         updateSimulatorHiddenFields();
       }
 
       if (APPS_SCRIPT_URL.includes("COLE_AQUI")) {
         submitStatus.className = "error";
-        submitStatus.textContent =
-          "Configure primeiro a URL do Google Apps Script no arquivo index.html.";
+        submitStatus.textContent = "Configure primeiro a URL do Google Apps Script no arquivo index.html.";
         return;
       }
 
@@ -830,17 +758,14 @@
         }
 
         submitStatus.className = "success";
-        submitStatus.textContent =
-          "Relatório enviado com sucesso. Seus dados foram registrados.";
+        submitStatus.textContent = "Relatório enviado com sucesso. Seus dados foram registrados.";
       } catch (error) {
         console.error(error);
         submitStatus.className = "error";
-        submitStatus.textContent =
-          "Não foi possível enviar o relatório. Verifique a URL do Apps Script e sua conexão.";
+        submitStatus.textContent = "Não foi possível enviar o relatório. Verifique a URL do Apps Script e sua conexão.";
       }
     });
 
-    // Data atual como valor inicial
     const dateInput = document.getElementById("student-date");
     if (!dateInput.value) {
       const now = new Date();
