@@ -745,24 +745,31 @@
       submitStatus.className = "loading";
       submitStatus.textContent = "Enviando relatório... Aguarde.";
 
+      // Apps Script recebe os campos por e.parameter quando enviados como
+      // application/x-www-form-urlencoded. O modo no-cors evita bloqueio CORS,
+      // mas impede ler a resposta do servidor; confirme o registro na planilha.
       const formData = new FormData(form);
+      const dados = new URLSearchParams();
+      for (const [chave, valor] of formData.entries()) {
+        dados.append(chave, String(valor));
+      }
 
       try {
-        const response = await fetch(APPS_SCRIPT_URL, {
+        await fetch(APPS_SCRIPT_URL, {
           method: "POST",
-          body: formData
+          mode: "no-cors",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+          },
+          body: dados.toString()
         });
 
-        if (!response.ok) {
-          throw new Error("Resposta HTTP " + response.status);
-        }
-
         submitStatus.className = "success";
-        submitStatus.textContent = "Relatório enviado com sucesso. Seus dados foram registrados.";
+        submitStatus.textContent = "Solicitação de envio realizada. Como o navegador não permite confirmar a resposta do Google, confira se o registro apareceu na planilha antes de encerrar.";
       } catch (error) {
         console.error(error);
         submitStatus.className = "error";
-        submitStatus.textContent = "Não foi possível enviar o relatório. Verifique a URL do Apps Script e sua conexão.";
+        submitStatus.textContent = "Não foi possível iniciar o envio. Verifique a URL do Apps Script e sua conexão.";
       }
     });
 
