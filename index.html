@@ -487,23 +487,23 @@
           <div class="control-group">
             <label for="mass-slider">Massa da barra condutora</label>
             <div class="mass-row">
-              <input id="mass-slider" type="range" min="0.050" max="0.250" step="0.001" value="0.150">
-              <input id="mass-display" type="number" min="0.050" max="0.250" step="0.001" value="0.150" aria-label="Massa em quilogramas">
+              <input id="mass-slider" type="range" min="0.1" max="0.3" step="0.001" value="0.1">
+              <input id="mass-display" type="number" min="0.1" max="0.3" step="0.001" value="0.1" aria-label="Massa em quilogramas">
             </div>
             <div class="value-readout">Massa: <strong id="mass-value">0,150 kg</strong></div>
           </div>
 
           <div class="control-group">
-            <label for="resistance-input">Resistência calculada, R (Ω)</label>
-            <div class="r-actions">
-              <input id="resistance-input" name="resistance_simulator" type="number" min="0.001" step="0.001" placeholder="Ex.: 0,850">
-              <button id="apply-r" class="btn-primary" type="button">Aplicar R</button>
-            </div>
-            <p class="hint">
-              Calcule o valor de R que faz a força magnética compensar o peso:
-              <strong>F<sub>m</sub> ≈ P</strong>. O limite de aceitação é ±3%.
-            </p>
+            <label for="k-slider">Constante elástica de cada mola, k</label>
+            <div class="mass-row"><input id="k-slider" type="range" min="30" max="100" step="1" value="55"><input id="k-display" type="number" min="30" max="100" step="1" value="55" aria-label="Constante elástica em newtons por metro"></div>
+            <div class="value-readout">Constante: <strong id="k-value">55 N/m</strong></div>
           </div>
+          <div class="control-group">
+            <label for="b-slider">Campo magnético do circuito 2, B</label>
+            <div class="mass-row"><input id="b-slider" type="range" min="0.10" max="0.80" step="0.01" value="0.40"><input id="b-display" type="number" min="0.10" max="0.80" step="0.01" value="0.40" aria-label="Campo magnético em teslas"></div>
+            <div class="value-readout">Campo: <strong id="b-value">0,40 T</strong></div>
+          </div>
+          <p class="hint">A tensão do circuito 1 começa em 0 V. Ajuste os parâmetros, faça seus cálculos e aplique a tensão pelo relatório para observar o movimento amortecido.</p>
         </div>
       </div>
 
@@ -582,10 +582,10 @@
 
           <!-- ETAPA 3: CAMPO MAGNÉTICO E RESISTÊNCIA -->
           <section class="form-step">
-            <h2>3. Campo magnético e resistência</h2>
-            <p class="step-description">Utilize os dados do painel. Para este modelo, Kb = 0,85. Registre cada resultado numérico com a unidade indicada.</p>
+            <h2>3. Campo magnético e corrente</h2>
+            <p class="step-description">Utilize os parâmetros do simulador. A resistência equivalente do circuito 1 é fixa e está indicada no painel. Registre os resultados com as unidades.</p>
             <div class="question">
-              <p><strong>1.</strong> Registre a tensão elétrica do modelo.</p>
+              <p><strong>1.</strong> Registre a tensão aplicada ao circuito 1.</p>
               <div class="input-with-unit"><input type="number" name="tensao_registrada" step="0.01" required><span>V</span></div>
             </div>
             <div class="question">
@@ -597,33 +597,31 @@
               <div class="input-with-unit"><input type="number" name="comprimento_fio_cm" min="0" step="0.1" required><span>cm</span></div>
             </div>
             <div class="question">
-              <p><strong>4.</strong> Calcule o campo magnético necessário para que a força magnética tenha o mesmo módulo que o peso.</p>
+              <p><strong>4.</strong> Calcule a força magnética necessária para equilibrar o peso na posição natural.</p>
               <div class="input-with-unit"><input type="number" name="campo_necessario_calculado" min="0" step="0.001" required><span>T</span></div>
             </div>
             <div class="question">
-              <p><strong>5.</strong> Registre a resistência teórica calculada.</p>
-              <div class="input-with-unit"><input type="number" name="resistencia_teorica_calculada" min="0" step="0.001" required><span>Ω</span></div>
+              <p><strong>5.</strong> Calcule a corrente necessária no fio condutor.</p>
+              <div class="input-with-unit"><input type="number" name="corrente_necessaria_calculada" min="0" step="0.001" required><span>A</span></div>
             </div>
           </section>
 
           <!-- ETAPA 4: APLICAÇÃO E OBSERVAÇÃO -->
           <section class="form-step">
-            <h2>4. Aplicação da resistência</h2>
-            <p class="step-description">Digite no simulador a resistência calculada, clique em “Aplicar R” e registre o que ocorreu.</p>
+            <h2>4. Aplicação da tensão</h2>
+            <p class="step-description">Digite abaixo a tensão que você calculou. Ao clicar em “Aplicar tensão”, o circuito será energizado e a barra responderá às forças do modelo.</p>
             <div class="question">
-              <p><strong>1.</strong> Qual resistência você digitou no simulador?</p>
-              <div class="input-with-unit"><input type="number" name="resistencia_aplicada" min="0" step="0.001" required><span>Ω</span></div>
+              <p><strong>1.</strong> Qual tensão você calculou para o circuito 1?</p>
+              <div class="input-with-unit"><input id="report-voltage" type="number" name="tensao_calculada_aplicada" min="0" max="24" step="0.01" placeholder="Ex.: 4,50" required><span>V</span></div>
+              <button id="apply-voltage" class="btn-primary" type="button">Aplicar tensão e observar</button>
+              <p id="voltage-status" class="hint" aria-live="polite">Circuito 1 desligado: V = 0 V.</p>
             </div>
             <div class="question">
-              <p><strong>2.</strong> O simulador aceitou o valor aplicado?</p>
-              <select name="resultado_aplicacao" required>
-                <option value="">Selecione uma opção</option>
-                <option value="Aceito">Sim, o desafio foi aceito</option>
-                <option value="Não aceito">Não, o desafio não foi aceito</option>
-              </select>
+              <p><strong>2.</strong> Descreva o que aconteceu com a barra após aplicar a tensão.</p>
+              <textarea name="observacao_movimento" rows="3" required></textarea>
             </div>
             <div class="question">
-              <p><strong>3.</strong> Registre o deslocamento indicado pela régua após aplicar a resistência.</p>
+              <p><strong>3.</strong> Registre o deslocamento final indicado pela régua.</p>
               <div class="input-with-unit"><input type="number" name="deslocamento_final_cm" step="0.01" required><span>cm</span></div>
             </div>
           </section>
@@ -633,7 +631,7 @@
             <h2>5. Resultados finais</h2>
             <p class="step-description">Registre os valores finais apresentados pelo simulador. As questões conceituais e a conclusão serão respondidas no roteiro impresso.</p>
             <div class="question">
-              <p><strong>1.</strong> Registre o campo magnético calculado pelo modelo após aplicar a resistência.</p>
+              <p><strong>1.</strong> Registre o campo magnético configurado no circuito 2.</p>
               <div class="input-with-unit"><input type="number" name="campo_final_simulador" min="0" step="0.001" required><span>T</span></div>
             </div>
             <div class="question">
@@ -641,8 +639,8 @@
               <div class="input-with-unit"><input type="number" name="forca_magnetica_final" min="0" step="0.001" required><span>N</span></div>
             </div>
             <div class="question">
-              <p><strong>3.</strong> Registre o erro relativo percentual, se estiver disponível. Caso não seja exibido, deixe em branco.</p>
-              <div class="input-with-unit"><input type="number" name="erro_relativo_informado" min="0" step="0.01"><span>%</span></div>
+              <p><strong>3.</strong> Registre o estado final observado no simulador.</p>
+              <div class="input-with-unit"><input type="text" name="estado_final_observado" placeholder="Ex.: equilíbrio abaixo da posição natural"></div>
             </div>
 
             <!-- Dados automáticos do simulador para conferência e histórico -->
