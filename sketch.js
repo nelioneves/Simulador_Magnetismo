@@ -589,7 +589,7 @@ function drawCircuitTwo() {
 function drawHUD() {
   const mobile = width < 900;
   const w = mobile ? Math.min(290, width - 30) : 260;
-  const h = mobile ? 112 : 125;
+  const h = mobile ? 130 : 140;
   
   // Posiciona o HUD no canto superior direito do canvas
   const x = width - w - 20; 
@@ -622,6 +622,7 @@ function drawHUD() {
     `k = ${k.toFixed(1)} N/m`,
     `V = ${V.toFixed(2)} V`,
     `i_fio = ${i_fio.toFixed(2)} A`,
+    `L = ${(L * 100).toFixed(1)} cm`,
     `P = ${P.toFixed(3)} N`,
     `Δx_mola = ${dx} cm`,
     `B* = ${Bideal.toFixed(3)} T`
