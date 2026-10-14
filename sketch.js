@@ -10,12 +10,14 @@
 // ----------------------------------------------------------------
 let massa = 0.150;          // kg — controlada pelo slider
 let k = 55.0;               // N/m — duas molas idênticas
-let V = 9.0;                // V — tensão do eletroímã
-let i_fio = 3.0;            // A — corrente no fio suspenso
+let V = 0.0;                // V — desligado até aplicação pelo relatório
+let i_fio = 0.0;            // A — calculada por I = V/R
 
 const g = 9.81;             // m/s²
 const L = 0.025;            // m — 2,5 cm
-const Kb = 0.85;            // T/(V/R), constante didática
+let Bexterno = 0.40;         // T — campo configurável do circuito 2
+const R_EQ = 2.0;            // ohm — resistência equivalente fixa do circuito 1
+let barVelocity = 0;
 
 // ----------------------------------------------------------------
 // VARIÁVEIS GRÁFICAS
@@ -53,8 +55,8 @@ let lastFrameMillis = 0;
 let massSlider;
 let massDisplay;
 let massValue;
-let resistanceInput;
-let applyButton;
+let kSlider, kDisplay, kValue, bSlider, bDisplay, bValue;
+let voltageInput, applyVoltageButton, voltageStatus;
 
 // ----------------------------------------------------------------
 // SETUP
@@ -70,16 +72,23 @@ function setup() {
   massSlider = document.getElementById("mass-slider");
   massDisplay = document.getElementById("mass-display");
   massValue = document.getElementById("mass-value");
-  resistanceInput = document.getElementById("resistance-input");
-  applyButton = document.getElementById("apply-r");
+  kSlider = document.getElementById("k-slider");
+  kDisplay = document.getElementById("k-display");
+  kValue = document.getElementById("k-value");
+  bSlider = document.getElementById("b-slider");
+  bDisplay = document.getElementById("b-display");
+  bValue = document.getElementById("b-value");
+  voltageInput = document.getElementById("report-voltage");
+  applyVoltageButton = document.getElementById("apply-voltage");
+  voltageStatus = document.getElementById("voltage-status");
 
   massSlider.addEventListener("input", () => {
-    const value = clamp(parseFloat(massSlider.value), 0.050, 0.250);
+    const value = clamp(parseFloat(massSlider.value), 0.1, 0.3);
     massa = value;
     massDisplay.value = value.toFixed(3);
     updateMassLabel();
 
-    if (challengeState !== "idle") resetChallengeImmediately();
+    refreshPhysics();
   });
 
   massDisplay.addEventListener("change", () => {
@@ -89,13 +98,20 @@ function setup() {
     massDisplay.value = value.toFixed(3);
     updateMassLabel();
 
-    if (challengeState !== "idle") resetChallengeImmediately();
+    refreshPhysics();
   });
 
-  applyButton.addEventListener("click", applyResistance);
+  const syncK = value => { k = clamp(Number(value) || 55, 30, 100); kSlider.value = k; kDisplay.value = k; kValue.textContent = `${k.toFixed(0)} N/m`; refreshPhysics(); };
+  kSlider.addEventListener("input", () => syncK(kSlider.value));
+  kDisplay.addEventListener("change", () => syncK(kDisplay.value));
+  const syncB = value => { Bexterno = clamp(Number(value) || 0.10, 0.10, 0.80); bSlider.value = Bexterno; bDisplay.value = Bexterno.toFixed(2); bValue.textContent = `${Bexterno.toFixed(2).replace('.', ',')} T`; refreshPhysics(); };
+  bSlider.addEventListener("input", () => syncB(bSlider.value));
+  bDisplay.addEventListener("change", () => syncB(bDisplay.value));
+  applyVoltageButton.addEventListener("click", applyVoltage);
 
   recalculateGeometry();
-  generatePhysicalParameters();
+  V = 0;
+  i_fio = 0;
   updateMassLabel();
   updateSimulatorHiddenFields();
 
@@ -163,11 +179,7 @@ function recalculateGeometry() {
   // Garante que a barra não desça além do limite do circuito 2
   if (mechanicalEqY > bottomLimit) mechanicalEqY = bottomLimit;
 
-  if (challengeState === "success") {
-    targetY = naturalY;
-  } else {
-    targetY = mechanicalEqY;
-  }
+  targetY = mechanicalEqY;
 
   // Régua na extrema direita, ajustada para não sobrepor o HUD
   rulerX = width - 90;
@@ -183,12 +195,23 @@ function recalculateGeometry() {
 // MOTOR DE AMORTECIMENTO
 // ----------------------------------------------------------------
 function updateMotion() {
-  const alpha = challengeState === "success" ? 0.085 : 0.045;
-  barY = lerp(barY, targetY, alpha);
-
-  if (!Number.isFinite(barY)) {
-    barY = naturalY;
-  }
+  // Dinâmica simplificada: eixo positivo para baixo; amortecimento viscoso.
+  const dt = Math.min(0.04, Math.max(0.001, (millis() - lastFrameMillis) / 1000));
+  lastFrameMillis = millis();
+  const x = (barY - naturalY) / globalScalePxPerMeter;
+  const current = V / R_EQ;
+  i_fio = current;
+  const Fm = Bexterno * current * L;
+  const netForce = massa * g - 2 * k * x - Fm;
+  const acceleration = netForce / massa;
+  const damping = 3.0; // N·s/m — amortecimento didático
+  barVelocity += (acceleration - (damping / massa) * barVelocity) * dt;
+  barY += barVelocity * globalScalePxPerMeter * dt;
+  const minY = naturalY - 0.04 * globalScalePxPerMeter;
+  const maxY = Math.min(height - 100, naturalY + 0.12 * globalScalePxPerMeter);
+  if (barY < minY) { barY = minY; barVelocity = Math.max(0, barVelocity); }
+  if (barY > maxY) { barY = maxY; barVelocity = Math.min(0, barVelocity); }
+  if (!Number.isFinite(barY)) { barY = naturalY; barVelocity = 0; }
 }
 
 // ----------------------------------------------------------------
@@ -202,13 +225,7 @@ function drawScene() {
   drawRuler();
   drawCircuitTwo();
 
-  if (challengeState === "success") {
-    drawSuccessMessage();
-  }
 
-  if (challengeState === "error") {
-    drawErrorMessage();
-  }
 }
 
 // ----------------------------------------------------------------
@@ -612,8 +629,7 @@ function drawHUD() {
   textStyle(NORMAL);
 
   const P = massa * g;
-  const Rideal = requiredResistance();
-  const Bideal = Kb * (V / Rideal);
+  const Bideal = Bexterno;
   const dx = ((challengeState === "success" ? 0 : springDeformation) * 100).toFixed(2);
 
   fill("#34495e");
@@ -632,7 +648,7 @@ function drawHUD() {
     text(lines[i], x + 11, y + 36 + i * 12);
   }
 
-  let stateText = "Aguardando R...";
+  let stateText = V <= 0 ? "Circuito desligado" : "Circuito energizado";
   let stateColor = "#66788a";
   if (challengeState === "success") {
     stateText = "SUCESSO";
@@ -713,118 +729,54 @@ function drawErrorMessage() {
 }
 
 // ----------------------------------------------------------------
-// DESAFIO
+// APLICAÇÃO DA TENSÃO E ATUALIZAÇÃO DO MODELO
 // ----------------------------------------------------------------
-function applyResistance() {
-  const R = parseFloat(resistanceInput.value);
-
-  if (!Number.isFinite(R) || R <= 0) {
-    setChallengeError("Digite uma resistência positiva.");
+function applyVoltage() {
+  const value = Number(String(voltageInput.value).replace(',', '.'));
+  if (!Number.isFinite(value) || value < 0 || value > 24) {
+    voltageStatus.textContent = "Informe uma tensão entre 0 e 24 V.";
+    voltageStatus.style.color = "#b42318";
     return;
   }
-
-  const P = massa * g;
-  const B = Kb * (V / R);
-  const Fm = B * i_fio * L;
-  const relativeError = Math.abs(Fm - P) / P;
-
-  updateSimulatorHiddenFields(R, B, Fm, P, relativeError);
-
-  if (relativeError <= 0.03) {
-    challengeState = "success";
-    fieldOn = true;
-    successAlpha = 0;
-    targetY = naturalY;
-    resistanceInput.style.borderColor = "#18864b";
-    return;
-  }
-
-  setChallengeError();
-
-  if (resetTimer) clearTimeout(resetTimer);
-
-  resetTimer = setTimeout(() => {
-    resetChallengeAfterError();
-  }, 3500);
+  V = value;
+  i_fio = V / R_EQ;
+  fieldOn = V > 0;
+  challengeState = V > 0 ? "energized" : "idle";
+  voltageStatus.textContent = `Tensão aplicada: ${V.toFixed(2).replace('.', ',')} V. Observe a oscilação e a posição final da barra.`;
+  voltageStatus.style.color = "#1769aa";
+  barVelocity = 0;
+  updateSimulatorHiddenFields();
 }
 
-function setChallengeError() {
-  challengeState = "error";
-  fieldOn = false;
-  resistanceInput.style.borderColor = "#c62828";
-}
-
-function resetChallengeAfterError() {
-  resistanceInput.value = "";
-  resistanceInput.style.borderColor = "";
-  generatePhysicalParameters();
-  challengeState = "idle";
-  fieldOn = false;
-  successAlpha = 0;
+function refreshPhysics() {
   recalculateGeometry();
   updateSimulatorHiddenFields();
 }
 
-function resetChallengeImmediately() {
-  if (resetTimer) clearTimeout(resetTimer);
-  resistanceInput.value = "";
-  resistanceInput.style.borderColor = "";
-  generatePhysicalParameters();
-  challengeState = "idle";
-  fieldOn = false;
-  successAlpha = 0;
-  recalculateGeometry();
-  updateSimulatorHiddenFields();
-}
-
-// ----------------------------------------------------------------
-// GERA NOVOS PARÂMETROS
-// ----------------------------------------------------------------
-function generatePhysicalParameters() {
-  k = random(45, 75);
-  V = random(7, 12);
-  i_fio = random(2.5, 4.5);
-  k = Number(k.toFixed(1));
-  V = Number(V.toFixed(2));
-  i_fio = Number(i_fio.toFixed(2));
-  barY = 0;
-}
-
-// ----------------------------------------------------------------
-// RESISTÊNCIA IDEAL
-// ----------------------------------------------------------------
 function requiredResistance() {
-  const P = massa * g;
-  return (Kb * V * i_fio * L) / P;
+  return R_EQ;
 }
 
 // ----------------------------------------------------------------
 // CAMPOS HIDDEN DO RELATÓRIO
 // ----------------------------------------------------------------
-function updateSimulatorHiddenFields(R = null, B = null, Fm = null, P = null, error = null) {
-  const resistance = R !== null ? R : (parseFloat(resistanceInput?.value) || NaN);
-  const weight = P !== null ? P : massa * g;
-
-  let fieldB = B;
-  let magneticForce = Fm;
-  let relativeError = error;
-
-  if (Number.isFinite(resistance) && resistance > 0) {
-    fieldB = Kb * (V / resistance);
-    magneticForce = fieldB * i_fio * L;
-    relativeError = Math.abs(magneticForce - weight) / weight;
-  }
-
+function updateSimulatorHiddenFields() {
+  const weight = massa * g;
+  const current = V / R_EQ;
+  const magneticForce = Bexterno * current * L;
+  const x = (barY - naturalY) / globalScalePxPerMeter;
+  const springForce = 2 * k * x;
+  const relativeError = weight > 0 ? Math.abs(magneticForce - weight) / weight : NaN;
   setHidden("sim-mass", massa.toFixed(3));
   setHidden("sim-k", k.toFixed(2));
   setHidden("sim-v", V.toFixed(2));
-  setHidden("sim-i", i_fio.toFixed(2));
-  setHidden("sim-b", Number.isFinite(fieldB) ? fieldB.toFixed(5) : "");
-  setHidden("sim-fm", Number.isFinite(magneticForce) ? magneticForce.toFixed(5) : "");
+  setHidden("sim-r", R_EQ.toFixed(2));
+  setHidden("sim-i", current.toFixed(4));
+  setHidden("sim-b", Bexterno.toFixed(5));
+  setHidden("sim-fm", magneticForce.toFixed(5));
   setHidden("sim-p", weight.toFixed(5));
   setHidden("sim-error", Number.isFinite(relativeError) ? relativeError.toFixed(6) : "");
-  setHidden("sim-spring-deformation",
-            ((challengeState === "success" ? 0 : springDeformation) * 100).toFixed(4));
+  setHidden("sim-spring-deformation", (x * 100).toFixed(4));
   setHidden("sim-state", challengeState);
 }
 
