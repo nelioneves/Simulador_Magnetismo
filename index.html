@@ -341,6 +341,11 @@
       line-height: 1.45;
     }
 
+    .input-with-unit { display: flex; align-items: center; gap: 8px; }
+    .input-with-unit input { flex: 1; min-width: 0; }
+    .input-with-unit span { color: var(--muted); font-size: 12px; min-width: 26px; }
+    .question select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: #fff; color: var(--text); font: inherit; }
+
     .question small {
       color: var(--muted);
     }
@@ -521,20 +526,20 @@
       </header>
 
       <nav class="steps" aria-label="Etapas do relatório">
-        <div class="step-indicator active">1<br>Identificação</div>
+        <div class="step-indicator active">1<br>Dados</div>
         <div class="step-indicator">2<br>Mecânica</div>
-        <div class="step-indicator">3<br>Eletromag.</div>
-        <div class="step-indicator">4<br>Vetores</div>
-        <div class="step-indicator">5<br>Reflexão</div>
+        <div class="step-indicator">3<br>Campo e R</div>
+        <div class="step-indicator">4<br>Ensaio</div>
+        <div class="step-indicator">5<br>Resultados</div>
       </nav>
 
       <form id="report-form">
         <div class="form-body">
 
-          <!-- ETAPA 1 -->
+          <!-- ETAPA 1: IDENTIFICAÇÃO E DADOS INICIAIS -->
           <section class="form-step active">
-            <h2>1. Identificação</h2>
-            <p class="step-description">Informe seus dados para identificar o relatório.</p>
+            <h2>1. Identificação e dados iniciais</h2>
+            <p class="step-description">Identifique seu relatório e registre os dados antes de aplicar a resistência calculada.</p>
             <div class="field">
               <label for="student-name">Nome</label>
               <input id="student-name" name="nome" type="text" required>
@@ -547,84 +552,100 @@
               <label for="student-date">Data</label>
               <input id="student-date" name="data" type="date" required>
             </div>
-            <div class="field">
-              <label for="initial-hypothesis">Antes de executar o desafio, o que você espera que aconteça quando a força magnética se aproximar do peso?</label>
-              <textarea id="initial-hypothesis" name="hipotese_inicial" required></textarea>
+            <div class="question">
+              <p><strong>1.</strong> Registre a massa da barra indicada no simulador.</p>
+              <div class="input-with-unit"><input type="number" name="massa_registrada" min="0.001" step="0.001" required><span>kg</span></div>
+            </div>
+            <div class="question">
+              <p><strong>2.</strong> Registre a deformação de cada mola antes de aplicar a resistência.</p>
+              <div class="input-with-unit"><input type="number" name="deformacao_inicial_cm" min="0" step="0.01" required><span>cm</span></div>
             </div>
           </section>
 
-          <!-- ETAPA 2 -->
+          <!-- ETAPA 2: MECÂNICA -->
           <section class="form-step">
-            <h2>2. Análise Mecânica</h2>
-            <p class="step-description">Analise as forças envolvidas na barra condutora.</p>
+            <h2>2. Análise mecânica</h2>
+            <p class="step-description">Use os dados registrados para calcular o peso da barra e a constante elástica de cada mola. Considere g = 9,81 m/s² e duas molas idênticas.</p>
             <div class="question">
-              <p><strong>1.</strong> Escreva a expressão para o peso da barra.</p>
-              <input type="text" name="mecanica_peso" placeholder="Ex.: P = m · g">
+              <p><strong>1.</strong> Informe o peso calculado da barra.</p>
+              <div class="input-with-unit"><input type="number" name="peso_calculado" step="0.001" required><span>N</span></div>
             </div>
             <div class="question">
-              <p><strong>2.</strong> Considerando duas molas idênticas, explique como a constante elástica <em>k</em> influencia a posição de equilíbrio.</p>
-              <textarea name="mecanica_molas"></textarea>
+              <p><strong>2.</strong> Informe a deformação convertida para metros.</p>
+              <div class="input-with-unit"><input type="number" name="deformacao_metros" min="0" step="0.0001" required><span>m</span></div>
             </div>
             <div class="question">
-              <p><strong>3.</strong> Qual é o papel do amortecimento/interpolação usado no simulador?</p>
-              <textarea name="mecanica_amortecimento"></textarea>
+              <p><strong>3.</strong> Calcule e registre a constante elástica de cada mola usando k = P/(2x).</p>
+              <div class="input-with-unit"><input type="number" name="k_calculado" min="0" step="0.01" required><span>N/m</span></div>
             </div>
           </section>
 
-          <!-- ETAPA 3 -->
+          <!-- ETAPA 3: CAMPO MAGNÉTICO E RESISTÊNCIA -->
           <section class="form-step">
-            <h2>3. Eletromagnetismo</h2>
-            <p class="step-description">Use as relações entre campo, corrente, tensão e resistência.</p>
+            <h2>3. Campo magnético e resistência</h2>
+            <p class="step-description">Utilize os dados do painel. Para este modelo, Kb = 0,85. Registre cada resultado numérico com a unidade indicada.</p>
             <div class="question">
-              <p><strong>1.</strong> Registre a expressão da força magnética sobre o fio.</p>
-              <input type="text" name="eletro_fm" placeholder="Ex.: Fm = B · i · L">
+              <p><strong>1.</strong> Registre a tensão elétrica do modelo.</p>
+              <div class="input-with-unit"><input type="number" name="tensao_registrada" step="0.01" required><span>V</span></div>
             </div>
             <div class="question">
-              <p><strong>2.</strong> O simulador utiliza <strong>B = K<sub>b</sub> · (V/R)</strong>. Explique qualitativamente o que ocorre com B quando R aumenta.</p>
-              <textarea name="eletro_resistencia"></textarea>
+              <p><strong>2.</strong> Registre a corrente elétrica no fio.</p>
+              <div class="input-with-unit"><input type="number" name="corrente_registrada" step="0.01" required><span>A</span></div>
             </div>
             <div class="question">
-              <p><strong>3.</strong> Registre o cálculo da resistência que você aplicou no desafio.</p>
-              <textarea name="eletro_calculo_r" placeholder="Mostre as etapas do cálculo."></textarea>
+              <p><strong>3.</strong> Registre o comprimento efetivo do fio indicado no painel.</p>
+              <div class="input-with-unit"><input type="number" name="comprimento_fio_cm" min="0" step="0.1" required><span>cm</span></div>
+            </div>
+            <div class="question">
+              <p><strong>4.</strong> Calcule o campo magnético necessário para que a força magnética tenha o mesmo módulo que o peso.</p>
+              <div class="input-with-unit"><input type="number" name="campo_necessario_calculado" min="0" step="0.001" required><span>T</span></div>
+            </div>
+            <div class="question">
+              <p><strong>5.</strong> Registre a resistência teórica calculada.</p>
+              <div class="input-with-unit"><input type="number" name="resistencia_teorica_calculada" min="0" step="0.001" required><span>Ω</span></div>
             </div>
           </section>
 
-          <!-- ETAPA 4 -->
+          <!-- ETAPA 4: APLICAÇÃO E OBSERVAÇÃO -->
           <section class="form-step">
-            <h2>4. Vetores</h2>
-            <p class="step-description">Observe as direções das forças e da corrente no esquema.</p>
+            <h2>4. Aplicação da resistência</h2>
+            <p class="step-description">Digite no simulador a resistência calculada, clique em “Aplicar R” e registre o que ocorreu.</p>
             <div class="question">
-              <p><strong>1.</strong> Indique a direção e o sentido do peso sobre a barra.</p>
-              <textarea name="vetor_peso"></textarea>
+              <p><strong>1.</strong> Qual resistência você digitou no simulador?</p>
+              <div class="input-with-unit"><input type="number" name="resistencia_aplicada" min="0" step="0.001" required><span>Ω</span></div>
             </div>
             <div class="question">
-              <p><strong>2.</strong> Qual deve ser a direção da força magnética para que ocorra a levitação?</p>
-              <textarea name="vetor_magnetica"></textarea>
+              <p><strong>2.</strong> O simulador aceitou o valor aplicado?</p>
+              <select name="resultado_aplicacao" required>
+                <option value="">Selecione uma opção</option>
+                <option value="Aceito">Sim, o desafio foi aceito</option>
+                <option value="Não aceito">Não, o desafio não foi aceito</option>
+              </select>
             </div>
             <div class="question">
-              <p><strong>3.</strong> Como a regra da mão direita pode ajudar a analisar o sentido da força magnética?</p>
-              <textarea name="vetor_mao_direita"></textarea>
+              <p><strong>3.</strong> Registre o deslocamento indicado pela régua após aplicar a resistência.</p>
+              <div class="input-with-unit"><input type="number" name="deslocamento_final_cm" step="0.01" required><span>cm</span></div>
             </div>
           </section>
 
-          <!-- ETAPA 5 -->
+          <!-- ETAPA 5: RESULTADOS -->
           <section class="form-step">
-            <h2>5. Reflexão</h2>
-            <p class="step-description">Relacione o resultado da simulação com o modelo físico estudado.</p>
+            <h2>5. Resultados finais</h2>
+            <p class="step-description">Registre os valores finais apresentados pelo simulador. As questões conceituais e a conclusão serão respondidas no roteiro impresso.</p>
             <div class="question">
-              <p><strong>1.</strong> O que aconteceu quando o erro relativo ficou ≤ 3%?</p>
-              <textarea name="reflexao_resultado" required></textarea>
+              <p><strong>1.</strong> Registre o campo magnético calculado pelo modelo após aplicar a resistência.</p>
+              <div class="input-with-unit"><input type="number" name="campo_final_simulador" min="0" step="0.001" required><span>T</span></div>
             </div>
             <div class="question">
-              <p><strong>2.</strong> Quais grandezas você precisou conhecer para determinar R?</p>
-              <textarea name="reflexao_grandezas"></textarea>
+              <p><strong>2.</strong> Registre a força magnética indicada/calculada pelo modelo.</p>
+              <div class="input-with-unit"><input type="number" name="forca_magnetica_final" min="0" step="0.001" required><span>N</span></div>
             </div>
             <div class="question">
-              <p><strong>3.</strong> Cite uma limitação deste modelo de laboratório virtual em comparação com um experimento real.</p>
-              <textarea name="reflexao_limitacao"></textarea>
+              <p><strong>3.</strong> Registre o erro relativo percentual, se estiver disponível. Caso não seja exibido, deixe em branco.</p>
+              <div class="input-with-unit"><input type="number" name="erro_relativo_informado" min="0" step="0.01"><span>%</span></div>
             </div>
 
-            <!-- Valores do simulador são preenchidos automaticamente pelo JS -->
+            <!-- Dados automáticos do simulador para conferência e histórico -->
             <input type="hidden" id="sim-mass" name="massa_simulador">
             <input type="hidden" id="sim-k" name="k_simulador">
             <input type="hidden" id="sim-v" name="tensao_eletroima">
@@ -635,10 +656,20 @@
             <input type="hidden" id="sim-error" name="erro_relativo">
             <input type="hidden" id="sim-spring-deformation" name="deformacao_mola_cm">
             <input type="hidden" id="sim-state" name="estado_desafio">
-
-            <p class="required-note">Os campos com validação obrigatória devem ser preenchidos antes do envio.</p>
+            <input type="hidden" name="hipotese_inicial" value="Respondida no roteiro impresso">
+            <input type="hidden" name="mecanica_molas" value="Cálculo registrado no formulário">
+            <input type="hidden" name="mecanica_amortecimento" value="Questões conceituais respondidas no roteiro impresso">
+            <input type="hidden" name="eletro_fm" value="Questões conceituais respondidas no roteiro impresso">
+            <input type="hidden" name="eletro_resistencia" value="Cálculo registrado no formulário">
+            <input type="hidden" name="eletro_calculo_r" value="Cálculo registrado no formulário">
+            <input type="hidden" name="vetor_peso" value="Questões conceituais respondidas no roteiro impresso">
+            <input type="hidden" name="vetor_magnetica" value="Questões conceituais respondidas no roteiro impresso">
+            <input type="hidden" name="vetor_mao_direita" value="Questões conceituais respondidas no roteiro impresso">
+            <input type="hidden" name="reflexao_resultado" value="Resultados registrados nos campos numéricos">
+            <input type="hidden" name="reflexao_grandezas" value="Dados e cálculos registrados no formulário">
+            <input type="hidden" name="reflexao_limitacao" value="Respondida no roteiro impresso">
+            <p class="required-note">Confira os valores antes de enviar. As explicações e a conclusão devem ser entregues no roteiro impresso.</p>
           </section>
-
         </div>
 
         <div id="submit-status"></div>
@@ -666,7 +697,7 @@
       Substitua a URL abaixo pela URL implantada do seu Google Apps
       Script (Web App).
     */
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/SEU_ID_DE_IMPLANTACAO/exec";
+    const APPS_SCRIPT_URL = "COLE_AQUI_A_URL_DO_SEU_GOOGLE_APPS_SCRIPT";
 
     // ============================================================
     // FORMULÁRIO MULTIETAPAS
