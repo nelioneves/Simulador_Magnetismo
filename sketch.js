@@ -589,6 +589,7 @@ function drawCircuitTwo() {
 function drawHUD() {
   const mobile = width < 900;
   const w = mobile ? Math.min(290, width - 30) : 260;
+  // Altura ampliada para exibir também o comprimento do fio L
   const h = mobile ? 130 : 140;
   
   // Posiciona o HUD no canto superior direito do canvas
@@ -619,7 +620,6 @@ function drawHUD() {
   textSize(9);
   const lines = [
     `m = ${massa.toFixed(3)} kg`,
-    `k = ${k.toFixed(1)} N/m`,
     `V = ${V.toFixed(2)} V`,
     `i_fio = ${i_fio.toFixed(2)} A`,
     `L = ${(L * 100).toFixed(1)} cm`,
