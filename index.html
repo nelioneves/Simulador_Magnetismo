@@ -487,10 +487,10 @@
           <div class="control-group">
             <label for="mass-slider">Massa da barra condutora</label>
             <div class="mass-row">
-              <input id="mass-slider" type="range" min="0.1" max="0.3" step="0.001" value="0.1">
-              <input id="mass-display" type="number" min="0.1" max="0.3" step="0.001" value="0.1" aria-label="Massa em quilogramas">
+              <input id="mass-slider" type="range" min="0.100" max="0.300" step="0.001" value="0.100">
+              <input id="mass-display" type="number" min="0.100" max="0.300" step="0.001" value="0.100" aria-label="Massa em quilogramas">
             </div>
-            <div class="value-readout">Massa: <strong id="mass-value">0,150 kg</strong></div>
+            <div class="value-readout">Massa: <strong id="mass-value">0,100 kg</strong></div>
           </div>
 
           <div class="control-group">
@@ -539,7 +539,7 @@
           <!-- ETAPA 1: IDENTIFICAÇÃO E DADOS INICIAIS -->
           <section class="form-step active">
             <h2>1. Identificação e dados iniciais</h2>
-            <p class="step-description">Identifique seu relatório e registre os dados antes de aplicar a resistência calculada.</p>
+            <p class="step-description">Identifique-se. Depois, escolha uma massa aleatória dentro do intervalo disponível no controle do simulador e registre os dados iniciais. A constante elástica k é informada no painel de controles.</p>
             <div class="field">
               <label for="student-name">Nome</label>
               <input id="student-name" name="nome" type="text" required>
@@ -553,94 +553,86 @@
               <input id="student-date" name="data" type="date" required>
             </div>
             <div class="question">
-              <p><strong>1.</strong> Registre a massa da barra indicada no simulador.</p>
-              <div class="input-with-unit"><input type="number" name="massa_registrada" min="0.001" step="0.001" required><span>kg</span></div>
+              <p><strong>1.</strong> Ajuste no simulador uma massa escolhida aleatoriamente entre 0,100 kg e 0,300 kg e registre o valor escolhido.</p>
+              <div class="input-with-unit"><input type="number" name="massa_registrada" min="0.100" max="0.300" step="0.001" required><span>kg</span></div>
             </div>
             <div class="question">
-              <p><strong>2.</strong> Registre a deformação de cada mola antes de aplicar a resistência.</p>
-              <div class="input-with-unit"><input type="number" name="deformacao_inicial_cm" min="0" step="0.01" required><span>cm</span></div>
+              <p><strong>2.</strong> Registre a constante elástica k indicada no painel de controles.</p>
+              <div class="input-with-unit"><input type="number" name="k_informado" min="30" max="100" step="1" required><span>N/m</span></div>
+            </div>
+            <div class="question">
+              <p><strong>3.</strong> Antes de aplicar tensão ao circuito 1, registre o deslocamento inicial da barra indicado pela régua.</p>
+              <div class="input-with-unit"><input type="number" name="deslocamento_inicial_cm" step="0.01" required><span>cm</span></div>
             </div>
           </section>
 
           <!-- ETAPA 2: MECÂNICA -->
           <section class="form-step">
             <h2>2. Análise mecânica</h2>
-            <p class="step-description">Use os dados registrados para calcular o peso da barra e a constante elástica de cada mola. Considere g = 9,81 m/s² e duas molas idênticas.</p>
+            <p class="step-description">Use a massa escolhida e g = 9,81 m/s². Converta a deformação inicial de centímetros para metros. A constante elástica k já foi informada na etapa anterior.</p>
             <div class="question">
-              <p><strong>1.</strong> Informe o peso calculado da barra.</p>
-              <div class="input-with-unit"><input type="number" name="peso_calculado" step="0.001" required><span>N</span></div>
+              <p><strong>1.</strong> Calcule o peso da barra usando P = m · g.</p>
+              <div class="input-with-unit"><input type="number" name="peso_calculado" min="0" step="0.001" required><span>N</span></div>
             </div>
             <div class="question">
-              <p><strong>2.</strong> Informe a deformação convertida para metros.</p>
+              <p><strong>2.</strong> Registre a deformação da mola convertida para metros.</p>
               <div class="input-with-unit"><input type="number" name="deformacao_metros" min="0" step="0.0001" required><span>m</span></div>
-            </div>
-            <div class="question">
-              <p><strong>3.</strong> Calcule e registre a constante elástica de cada mola usando k = P/(2x).</p>
-              <div class="input-with-unit"><input type="number" name="k_calculado" min="0" step="0.01" required><span>N/m</span></div>
             </div>
           </section>
 
-          <!-- ETAPA 3: CAMPO MAGNÉTICO E RESISTÊNCIA -->
+          <!-- ETAPA 3: CAMPO MAGNÉTICO E CORRENTE -->
           <section class="form-step">
             <h2>3. Campo magnético e corrente</h2>
-            <p class="step-description">Utilize os parâmetros do simulador. A resistência equivalente do circuito 1 é fixa e está indicada no painel. Registre os resultados com as unidades.</p>
+            <p class="step-description">Utilize a força magnética Fm = B · I · L e a relação V = R_eq · I. A resistência equivalente do circuito 1 está indicada no HUD. Use unidades do SI nos cálculos.</p>
             <div class="question">
-              <p><strong>1.</strong> Registre a tensão aplicada ao circuito 1.</p>
-              <div class="input-with-unit"><input type="number" name="tensao_registrada" step="0.01" required><span>V</span></div>
+              <p><strong>1.</strong> Calcule a força magnética necessária para equilibrar o peso da barra na posição natural.</p>
+              <div class="input-with-unit"><input type="number" name="forca_necessaria_calculada" min="0" step="0.001" required><span>N</span></div>
             </div>
             <div class="question">
-              <p><strong>2.</strong> Registre a corrente elétrica no fio.</p>
-              <div class="input-with-unit"><input type="number" name="corrente_registrada" step="0.01" required><span>A</span></div>
-            </div>
-            <div class="question">
-              <p><strong>3.</strong> Registre o comprimento efetivo do fio indicado no painel.</p>
+              <p><strong>2.</strong> Registre o comprimento efetivo do fio indicado no painel.</p>
               <div class="input-with-unit"><input type="number" name="comprimento_fio_cm" min="0" step="0.1" required><span>cm</span></div>
             </div>
             <div class="question">
-              <p><strong>4.</strong> Calcule a força magnética necessária para equilibrar o peso na posição natural.</p>
-              <div class="input-with-unit"><input type="number" name="campo_necessario_calculado" min="0" step="0.001" required><span>T</span></div>
+              <p><strong>3.</strong> Calcule a corrente necessária no fio condutor para produzir a força magnética calculada.</p>
+              <div class="input-with-unit"><input type="number" name="corrente_necessaria_calculada" min="0" step="0.001" required><span>A</span></div>
             </div>
             <div class="question">
-              <p><strong>5.</strong> Calcule a corrente necessária no fio condutor.</p>
-              <div class="input-with-unit"><input type="number" name="corrente_necessaria_calculada" min="0" step="0.001" required><span>A</span></div>
+              <p><strong>4.</strong> Calcule a tensão que deve ser aplicada ao circuito 1. Insira o valor calculado na etapa seguinte.</p>
+              <div class="input-with-unit"><input type="number" name="tensao_necessaria_calculada" min="0" step="0.01" required><span>V</span></div>
             </div>
           </section>
 
-          <!-- ETAPA 4: APLICAÇÃO E OBSERVAÇÃO -->
+          <!-- ETAPA 4: ENSAIO -->
           <section class="form-step">
-            <h2>4. Aplicação da tensão</h2>
-            <p class="step-description">Digite abaixo a tensão que você calculou. Ao clicar em “Aplicar tensão”, o circuito será energizado e a barra responderá às forças do modelo.</p>
+            <h2>4. Ensaio</h2>
+            <p class="step-description">Ajuste a tensão calculada abaixo e aplique-a ao circuito 1. Observe o movimento da barra e a régua.</p>
             <div class="question">
-              <p><strong>1.</strong> Qual tensão você calculou para o circuito 1?</p>
-              <div class="input-with-unit"><input id="report-voltage" type="number" name="tensao_calculada_aplicada" min="0" max="24" step="0.01" placeholder="Ex.: 4,50" required><span>V</span></div>
+              <label for="report-voltage"><strong>Tensão aplicada ao circuito 1 (V)</strong></label>
+              <div class="input-with-unit"><input id="report-voltage" type="number" name="tensao_calculada_aplicada" min="0" step="0.01" placeholder="Digite a tensão calculada" required><span>V</span></div>
               <button id="apply-voltage" class="btn-primary" type="button">Aplicar tensão e observar</button>
               <p id="voltage-status" class="hint" aria-live="polite">Circuito 1 desligado: V = 0 V.</p>
             </div>
             <div class="question">
-              <p><strong>2.</strong> Descreva o que aconteceu com a barra após aplicar a tensão.</p>
+              <p><strong>1.</strong> Descreva o que aconteceu com a barra após aplicar a tensão.</p>
               <textarea name="observacao_movimento" rows="3" required></textarea>
             </div>
             <div class="question">
-              <p><strong>3.</strong> Registre o deslocamento final indicado pela régua.</p>
+              <p><strong>2.</strong> Registre o deslocamento final indicado pela régua.</p>
               <div class="input-with-unit"><input type="number" name="deslocamento_final_cm" step="0.01" required><span>cm</span></div>
             </div>
           </section>
 
-          <!-- ETAPA 5: RESULTADOS -->
+          <!-- ETAPA 5: RESULTADOS FINAIS -->
           <section class="form-step">
             <h2>5. Resultados finais</h2>
-            <p class="step-description">Registre os valores finais apresentados pelo simulador. As questões conceituais e a conclusão serão respondidas no roteiro impresso.</p>
+            <p class="step-description">Os valores de campo magnético e força magnética já foram definidos ou calculados nas etapas anteriores. Registre apenas o resultado final do ensaio.</p>
             <div class="question">
-              <p><strong>1.</strong> Registre o campo magnético configurado no circuito 2.</p>
-              <div class="input-with-unit"><input type="number" name="campo_final_simulador" min="0" step="0.001" required><span>T</span></div>
+              <p><strong>1.</strong> Registre o erro relativo percentual entre a força magnética produzida e o peso da barra, se disponível no simulador.</p>
+              <div class="input-with-unit"><input type="number" name="erro_relativo_informado" min="0" step="0.01"><span>%</span></div>
             </div>
             <div class="question">
-              <p><strong>2.</strong> Registre a força magnética indicada/calculada pelo modelo.</p>
-              <div class="input-with-unit"><input type="number" name="forca_magnetica_final" min="0" step="0.001" required><span>N</span></div>
-            </div>
-            <div class="question">
-              <p><strong>3.</strong> Registre o estado final observado no simulador.</p>
-              <div class="input-with-unit"><input type="text" name="estado_final_observado" placeholder="Ex.: equilíbrio abaixo da posição natural"></div>
+              <p><strong>2.</strong> Registre o estado final observado no simulador.</p>
+              <input type="text" name="estado_final_observado" placeholder="Ex.: barra próxima à posição natural">
             </div>
 
             <!-- Dados automáticos do simulador para conferência e histórico -->
