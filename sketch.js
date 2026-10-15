@@ -8,7 +8,7 @@
 // ----------------------------------------------------------------
 // VARIÁVEIS FÍSICAS GLOBAIS
 // ----------------------------------------------------------------
-let massa = 0.150;          // kg — controlada pelo slider
+let massa = 0.100;          // kg — controlada pelo slider
 let k = 55.0;               // N/m — duas molas idênticas
 let V = 0.0;                // V — desligado até aplicação pelo relatório
 let i_fio = 0.0;            // A — calculada por I = V/R
@@ -83,7 +83,7 @@ function setup() {
   voltageStatus = document.getElementById("voltage-status");
 
   massSlider.addEventListener("input", () => {
-    const value = clamp(parseFloat(massSlider.value), 0.1, 0.3);
+    const value = clamp(parseFloat(massSlider.value), 0.100, 0.300);
     massa = value;
     massDisplay.value = value.toFixed(3);
     updateMassLabel();
@@ -92,7 +92,7 @@ function setup() {
   });
 
   massDisplay.addEventListener("change", () => {
-    const value = clamp(parseFloat(massDisplay.value) || 0.150, 0.050, 0.250);
+    const value = clamp(parseFloat(massDisplay.value) || 0.100, 0.100, 0.300);
     massa = value;
     massSlider.value = value.toFixed(3);
     massDisplay.value = value.toFixed(3);
@@ -380,8 +380,8 @@ function drawWireAndSprings() {
   text("barra condutora de cobre", (barLeft + barRight) / 2, barY - 20);
 
   // ---- Cota da mola (Δx) movida para a esquerda ----
-  const deformationNow = challengeState === "success" ? 0 : springDeformation;
-  const deformationCm = deformationNow * 100;
+  const deformationNow = (barY - naturalY) / globalScalePxPerMeter;
+  const deformationCm = Math.abs(deformationNow) * 100;
   
   const dimX = springXLeft - 25;
   const springTop = topY + 20;
@@ -630,7 +630,7 @@ function drawHUD() {
 
   const P = massa * g;
   const Bideal = Bexterno;
-  const dx = ((challengeState === "success" ? 0 : springDeformation) * 100).toFixed(2);
+  const dx = (Math.abs((barY - naturalY) / globalScalePxPerMeter) * 100).toFixed(2);
 
   fill("#34495e");
   textSize(9);
@@ -638,10 +638,10 @@ function drawHUD() {
     `m = ${massa.toFixed(3)} kg`,
     `V = ${V.toFixed(2)} V`,
     `i_fio = ${i_fio.toFixed(2)} A`,
+    `R_eq = ${R_EQ.toFixed(2)} Ω`,
     `L = ${(L * 100).toFixed(1)} cm`,
-    `P = ${P.toFixed(3)} N`,
     `Δx_mola = ${dx} cm`,
-    `B* = ${Bideal.toFixed(3)} T`
+    `B = ${Bideal.toFixed(3)} T`
   ];
 
   for (let i = 0; i < lines.length; i++) {
@@ -733,8 +733,8 @@ function drawErrorMessage() {
 // ----------------------------------------------------------------
 function applyVoltage() {
   const value = Number(String(voltageInput.value).replace(',', '.'));
-  if (!Number.isFinite(value) || value < 0 || value > 24) {
-    voltageStatus.textContent = "Informe uma tensão entre 0 e 24 V.";
+  if (!Number.isFinite(value) || value < 0) {
+    voltageStatus.textContent = "Informe uma tensão igual ou superior a 0 V.";
     voltageStatus.style.color = "#b42318";
     return;
   }
